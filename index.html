@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SHAFT PART 2: THE FOREST</title>
+    <style>
+        :root {
+            --primary-red: #ff1a1a;
+            --glow-red: rgba(255, 26, 26, 0.6);
+            --bg-dark: #020204;
+        }
+
+        body {
+            margin: 0; overflow: hidden; background-color: var(--bg-dark);
+            font-family: 'Courier New', Courier, monospace; user-select: none;
+            color: #fff; touch-action: none;
+        }
+        #canvas-container { width: 100vw; height: 100vh; display: none; }
+        
+        /* MENU & CINEMATIC OVERLAYS */
+        #main-menu {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, #051405 0%, #020402 100%);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 100; transition: opacity 0.8s ease;
+        }
+        .menu-title {
+            font-size: 42px; color: #00aa50; letter-spacing: 8px; margin-bottom: 5px;
+            font-weight: 900; text-align: center; text-shadow: 0 0 15px rgba(0,200,80,0.4);
+        }
+        .menu-subtitle { color: #555; font-size: 11px; margin-bottom: 40px; letter-spacing: 3px; text-transform: uppercase; }
+        .menu-btn {
+            background: rgba(5, 15, 5, 0.7); border: 1px solid #0f5a1f; color: #bbb;
+            padding: 14px 40px; font-size: 13px; font-family: inherit; font-weight: bold;
+            cursor: pointer; letter-spacing: 3px; margin: 8px; width: 260px; text-align: center;
+            transition: all 0.3s ease;
+        }
+        .menu-btn:hover { background: #006a20; color: #fff; box-shadow: 0 0 20px rgba(0,255,100,0.5); }
+
+        /* LOADING SCREEN */
+        #loading-screen {
+            display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000; z-index: 200; flex-direction: column; justify-content: center; align-items: center;
+        }
+        #loading-bar-container { width: 80%; max-width: 400px; height: 3px; background: #0f150f; border: 1px solid #222; margin-top: 25px; }
+        #loading-bar { width: 0%; height: 100%; background: #00ff66; box-shadow: 0 0 12px #00ff66; }
+
+        /* HUD WRAPPER */
+        #ui-hud-wrapper {
+            position: absolute; top: 20px; left: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 10; pointer-events: none; opacity: 0; transition: opacity 1s;
+        }
+        #ui { color: #00ff66; font-size: 13px; text-shadow: 2px 2px 4px #000; margin-bottom: 5px; }
+        .hud-container { width: 180px; height: 5px; background: rgba(10,12,10,0.8); border: 1px solid #252525; position: relative; }
+        .hud-bar { width: 100%; height: 100%; }
+        #stamina-bar { background: #d61c1c; }
+        #battery-bar { background: #00e6b8; }
+        .hud-label { position: absolute; top: -16px; left: 0; font-size: 9px; font-weight: bold; letter-spacing: 1px; text-shadow: 1px 1px 2px #000; }
+        
+        /* SYSTEM ENVIRONMENT FILTERS */
+        #vignette { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: radial-gradient(circle, rgba(0,0,0,0) 20%, rgba(0,0,0,0.99) 100%); pointer-events: none; z-index: 4; display: none; }
+        #flash-screen { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: #fff; pointer-events: none; z-index: 6; opacity: 0; }
+        #subtitles { position: absolute; bottom: 25%; left: 50%; transform: translateX(-50%); color: #ffffff; font-size: 16px; text-align: center; text-shadow: 0 0 10px #000; z-index: 15; pointer-events: none; width: 85%; font-weight: bold; transition: opacity 0.3s; }
+        
+        /* CONTROLS MOBILE */
+        #mobile-ui { display: none; position: absolute; bottom: 0; left: 0; width: 100vw; height: 180px; z-index: 50; pointer-events: none; }
+        #joystick-zone { position: absolute; bottom: 25px; left: 25px; width: 110px; height: 110px; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.15); border-radius: 50%; pointer-events: auto; }
+        #joystick-knob { position: absolute; top: 35px; left: 35px; width: 40px; height: 40px; background: rgba(0, 255, 100, 0.3); border: 1px solid #00ff66; border-radius: 50%; }
+        #mobile-buttons { position: absolute; bottom: 25px; right: 25px; display: flex; gap: 15px; pointer-events: auto; }
+        .m-btn { width: 65px; height: 65px; background: rgba(5, 20, 5, 0.85); border: 1px solid #0a6a1a; color: #fff; border-radius: 50%; font-size: 10px; font-weight: bold; display: flex; justify-content: center; align-items: center; text-align: center; }
+        .m-btn:active { background: #00ff66; color: #000; }
+
+        /* SCREENS ENDING */
+        .end-screen { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; font-weight: bold; z-index: 60; width: 85%; }
+        #game-over { color: #ff0000; font-size: 32px; text-shadow: 0 0 25px #ff0000; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div style="font-size: 13px; color: #aaa; letter-spacing: 2px;">MEMASUKI AREA: THE FOREST</div>
+        <div id="loading-bar-container"><div id="loading-bar"></div></div>
+    </div>
+
+    <div id="main-menu">
+        <div class="menu-title">SHAFT PART 2</div>
+        <div class="menu-subtitle">THE FOREST • VOL. 2 (DEMO)</div>
+        <button class="menu-btn" onclick="startForestSequence()">LANJUTKAN CERITA</button>
+    </div>
+
+    <div id="canvas-container"></div>
+    <div id="vignette"></div>
+    <div id="flash-screen"></div>
+    <div id="subtitles"></div>
+    
+    <div id="ui-hud-wrapper">
+        <div id="ui">
+            <div id="status-mode">STATUS: AMBRUK</div>
+            <div id="task-line">SISA JARAK: --</div>
+        </div>
+        <div id="stamina-container" class="hud-container"><div class="hud-label" style="color:#e62121;">STAMINA</div><div id="stamina-bar" class="hud-bar"></div></div>
+        <div id="battery-container" class="hud-container"><div class="hud-label" style="color:#00ffcc;">SENTER POWER</div><div id="battery-bar" class="hud-bar"></div></div>
+    </div>
+
+    <div id="mobile-ui">
+        <div id="joystick-zone"><div id="joystick-knob"></div></div>
+        <div id="mobile-buttons">
+            <button class="m-btn" id="btn-sprint">TAHAN<br>LARI</button>
+            <button class="m-btn" id="btn-light">SENTER</button>
+        </div>
+    </div>
+
+    <div id="game-over" class="end-screen">BAD ENDING: TERCABIK BURUNG HANTU RAKSASA<p style="font-size: 13px; color: #666; margin-top: 15px;">Refresh halaman untuk mencoba kembali.</p></div>
+
+    <script>
+        let isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+        let mouseSensitivity = 0.0018;
+
+        // STATE LOGIC SYSTEM
+        const PHASE_INTRO = 0;
+        const PHASE_CHASE = 1;
+        const PHASE_EXPLORE = 2;
+        let currentPhase = PHASE_INTRO;
+
+        let gameStarted = false, isGameOver = false;
+        let introTimer = 0, introStage = 0;
+        let chaseDistanceLeft = 100; // Target kabur 100 meter
+
+        let stamina = 100, isExhausted = false;
+        let battery = 100, flashlightOn = true;
+        const move = { forward: false, backward: false, left: false, right: false, sprint: false };
+
+        const container = document.getElementById('canvas-container');
+        const flashScreen = document.getElementById('flash-screen');
+        const subtitles = document.getElementById('subtitles');
+        const hudWrapper = document.getElementById('ui-hud-wrapper');
+
+        // --- THREE.JS GENERATOR ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020502, 0.18); // Kabut hutan hijau gelap miring kelam
+
+        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 500);
+        
+        // Mulai dengan posisi tidur/ambruk dari ending Part 1
+        camera.position.set(0, 0.35, 0);
+        camera.rotation.set(0, 0, 0.45); 
+
+        const renderer = new THREE.WebGLRenderer({ antialias: !isMobile });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        container.appendChild(renderer.domElement);
+
+        // LIGHTS
+        const flashlight = new THREE.SpotLight(0xdff0ff, 6.0, 40, Math.PI / 5.5, 0.5, 1.0);
+        scene.add(flashlight);
+        flashlight.target = new THREE.Object3D();
+        scene.add(flashlight.target);
+        const ambient = new THREE.AmbientLight(0x050a05, 0.1);
+        scene.add(ambient);
+
+        // PROCEDURAL GROUND TEXTURE
+        function createForestGround() {
+            const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
+            const ctx = canvas.getContext('2d'); ctx.fillStyle = '#0b140b'; ctx.fillRect(0,0,256,256);
+            for(let i=0; i<8000; i++) {
+                ctx.fillStyle = `rgba(0, ${Math.floor(Math.random()*15)}, 0, 0.3)`;
+                ctx.fillRect(Math.random()*256, Math.random()*256, 2, 2);
+            }
+            return new THREE.CanvasTexture(canvas);
+        }
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x0a120a, map: createForestGround(), roughness: 0.9 });
+        const terrain = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), groundMat);
+        terrain.rotation.x = -Math.PI/2;
+        scene.add(terrain);
+
+        // MODELS GENERATOR (WENDIGO, SAVIOR, THE OWL, TREES)
+        const darkMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 1.0 });
+        
+        // 1. Wendigo (Berdiri di belakang player pas awal)
+        const wendigo = new THREE.Group();
+        const wBody = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 2.5), darkMat); wBody.position.y = 1.25; wwendigoEye = new THREE.Mesh(new THREE.SphereGeometry(0.04,4,4), new THREE.MeshBasicMaterial({color:0xff0000})); wwendigoEye.position.set(0, 2.3, 0.12);
+        wendigo.add(wBody, wwendigoEye);
+        wendigo.position.set(0, 0, -3); // Depan pandangan saat miring
+        scene.add(wendigo);
+
+        // 2. Savior NPC
+        const savior = new THREE.Group();
+        const sBody = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 1.7), new THREE.MeshStandardMaterial({color: 0x1c2d42})); sBody.position.y = 0.85;
+        const sLight = new THREE.PointLight(0xffffff, 1.5, 10); sLight.position.y = 1.2;
+        savior.add(sBody, sLight);
+        savior.position.set(1.5, 0, -2);
+        scene.add(savior); savior.visible = false;
+
+        // 3. The Owl (Burung Hantu Raksasa)
+        const theOwl = new THREE.Group();
+        const oBody = new THREE.Mesh(new THREE.SphereGeometry(0.6, 8, 8), darkMat); oBody.position.y = 0;
+        const wingL = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.05, 0.8), darkMat); wingL.position.set(-1.4, 0, 0);
+        const wingR = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.05, 0.8), darkMat); wingR.position.set(1.4, 0, 0);
+        const oEyeL = new THREE.Mesh(new THREE.SphereGeometry(0.08,6,6), new THREE.MeshBasicMaterial({color: 0xffaa00})); oEyeL.position.set(-0.2, 0.1, 0.5);
+        const oEyeR = new THREE.Mesh(new THREE.SphereGeometry(0.08,6,6), new THREE.MeshBasicMaterial({color: 0xffaa00})); oEyeR.position.set(0.2, 0.1, 0.5);
+        theOwl.add(oBody, wingL, wingR, oEyeL, oEyeR);
+        theOwl.position.set(0, 15, -10);
+        scene.add(theOwl); theOwl.visible = false;
+
+        // 4. Procedural Trees
+        const treeTrunkMat = new THREE.MeshStandardMaterial({ color: 0x0f0a05, roughness: 0.9 });
+        const treeLeavesMat = new THREE.MeshStandardMaterial({ color: 0x051205, roughness: 1.0 });
+        
+        function spawnTree(x, z) {
+            const tree = new THREE.Group();
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 7), treeTrunkMat); trunk.position.y = 3.5;
+            const leaves = new THREE.Mesh(new THREE.ConeGeometry(2, 5, 5), treeLeavesMat); leaves.position.y = 7;
+            tree.add(trunk, leaves); tree.position.set(x, 0, z);
+            scene.add(tree);
+        }
+
+        // Jalur lurus untuk fase escape/chase
+        for(let z = -20; z > -150; z -= 8) {
+            spawnTree(-4.5, z);
+            spawnTree(4.5, z);
+        }
+
+        // Bounded 10x10x10 Area untuk fase Explore (Terletak di sekitar z = -130)
+        let exploreCenterZ = -130;
+        function setupExploreArena() {
+            // Pagar pohon mengelilingi kotak arena 10x10 (lebar radius sekitar 15 unit biar leluasa bergerak)
+            for(let x = -15; x <= 15; x += 3) {
+                spawnTree(x, exploreCenterZ - 15); // Batas utara
+                spawnTree(x, exploreCenterZ + 15); // Batas selatan
+            }
+            for(let z = exploreCenterZ - 15; z <= exploreCenterZ + 15; z += 3) {
+                spawnTree(-15, z); // Batas barat
+                spawnTree(15, z);  // Batas timur
+            }
+            // Tambah beberapa pohon acak di dalam arena kotak eksplorasi
+            spawnTree(-5, exploreCenterZ - 5);
+            spawnTree(5, exploreCenterZ + 6);
+            spawnTree(-3, exploreCenterZ + 4);
+        }
+        setupExploreArena();
+
+        // --- CORE SYSTEMS INTERACTION ---
+        function startForestSequence() {
+            document.getElementById('main-menu').style.display = 'none';
+            const ls = document.getElementById('loading-screen');
+            ls.style.display = 'flex';
+            let p = 0;
+            let iv = setInterval(() => {
+                p += 5; document.getElementById('loading-bar').style.width = p+"%";
+                if(p >= 100) {
+                    clearInterval(iv); ls.style.display = 'none';
+                    container.style.display = 'block'; document.getElementById('vignette').style.display = 'block';
+                    hudWrapper.style.opacity = 1;
+                    if(isMobile) { document.getElementById('mobile-ui').style.display = 'block'; }
+                    else { container.requestPointerLock(); }
+                    gameStarted = true;
+                }
+            }, 30);
+        }
+
+        function triggerFlash() {
+            flashScreen.style.opacity = 1;
+            setTimeout(() => { flashScreen.style.opacity = 0; }, 150);
+        }
+
+        function showSubtitle(txt, dur) {
+            subtitles.innerText = txt; subtitles.style.opacity = 1;
+            if(dur) setTimeout(() => { if(subtitles.innerText === txt) subtitles.style.opacity = 0; }, dur);
+        }
+
+        // --- INPUT CONTROLS ---
+        if(!isMobile) {
+            document.addEventListener('mousemove', (e) => {
+                if(!gameStarted || isGameOver || currentPhase === PHASE_INTRO) return;
+                camera.rotation.y -= e.movementX * mouseSensitivity;
+                camera.rotation.x -= e.movementY * mouseSensitivity;
+                camera.rotation.x = Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, camera.rotation.x));
+            });
+            document.addEventListener('keydown', (e) => {
+                let k = e.key.toLowerCase();
+                if(k === 'w') move.forward = true; if(k === 's') move.backward = true;
+                if(k === 'a') move.left = true; if(k === 'd') move.right = true;
+                if(e.key === 'Shift') move.sprint = true;
+            });
+            document.addEventListener('keyup', (e) => {
+                let k = e.key.toLowerCase();
+                if(k === 'w') move.forward = false; if(k === 's') move.backward = false;
+                if(k === 'a') move.left = false; if(k === 'd') move.right = false;
+                if(e.key === 'Shift') move.sprint = false;
+            });
+        } else {
+            // MOBILE JOYSTICK ENGINE
+            let joyZone = document.getElementById('joystick-zone'), joyKnob = document.getElementById('joystick-knob');
+            let jId = null, cx = 0, cy = 0;
+            joyZone.addEventListener('touchstart', (e) => {
+                let r = joyZone.getBoundingClientRect(); cx = r.left + r.width/2; cy = r.top + r.height/2;
+                jId = e.changedTouches[0].identifier;
+            });
+            joyZone.addEventListener('touchmove', (e) => {
+                if(jId === null) return; let t = null;
+                for(let i=0; i<e.touches.length; i++) if(e.touches[i].identifier === jId) { t = e.touches[i]; break; }
+                if(!t) return;
+                let dx = t.clientX - cx, dy = t.clientY - cy, dist = Math.sqrt(dx*dx+dy*dy), max = 40;
+                if(dist > max) { dx = (dx/dist)*max; dy = (dy/dist)*max; }
+                joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+                move.forward = (dy < -10); move.backward = (dy > 10);
+                move.left = (dx < -10); move.right = (dx > 10);
+            });
+            joyZone.addEventListener('touchend', () => { jId = null; joyKnob.style.transform = 'translate(0,0)'; move.forward = move.backward = move.left = move.right = false; });
+            
+            // MOBILE CAMERA LOOK TOUCH
+            let lookId = null, lx = 0, ly = 0;
+            window.addEventListener('touchstart', (e) => {
+                if(currentPhase === PHASE_INTRO) return;
+                for(let i=0; i<e.changedTouches.length; i++) {
+                    let touch = e.changedTouches[i];
+                    if(touch.clientX > window.innerWidth / 2) { lookId = touch.identifier; lx = touch.clientX; ly = touch.clientY; }
+                }
+            });
+            window.addEventListener('touchmove', (e) => {
+                for(let i=0; i<e.changedTouches.length; i++) {
+                    let touch = e.changedTouches[i];
+                    if(touch.identifier === lookId) {
+                        let dx = touch.clientX - lx, dy = touch.clientY - ly;
+                        camera.rotation.y -= dx * 0.004; camera.rotation.x -= dy * 0.004;
+                        lx = touch.clientX; ly = touch.clientY;
+                    }
+                }
+            });
+            window.addEventListener('touchend', (e) => { for(let i=0; i<e.changedTouches.length; i++) if(e.changedTouches[i].identifier === lookId) lookId = null; });
+
+            document.getElementById('btn-sprint').addEventListener('touchstart', () => move.sprint = true);
+            document.getElementById('btn-sprint').addEventListener('touchend', () => move.sprint = false);
+            document.getElementById('btn-light').addEventListener('touchstart', () => { flashlightOn = !flashlightOn; });
+        }
+
+        let clock = new THREE.Clock();
+
+        // --- MAIN ENGINE LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+            if (!gameStarted || isGameOver) { renderer.render(scene, camera); return; }
+
+            const delta = clock.getDelta();
+            const time = clock.getElapsedTime();
+
+            // FLASHLIGHT LERP FOLLOW CAMERA
+            flashlight.position.copy(camera.position);
+            const camDir = new THREE.Vector3(); camera.getWorldDirection(camDir);
+            flashlight.target.position.copy(camera.position).add(camDir);
+            flashlight.intensity = flashlightOn ? 6.0 : 0;
+
+            // BATTERY ENGINE
+            if(flashlightOn && battery > 0) { battery -= 0.03; if(battery <= 0) { battery = 0; flashlightOn = false; } }
+            document.getElementById('battery-bar').style.width = battery + "%";
+
+            // STAMINA STABILIZER
+            let isMoving = (move.forward || move.backward || move.left || move.right);
+            if(move.sprint && isMoving && !isExhausted) {
+                stamina -= 0.15; if(stamina <= 0) { stamina = 0; isExhausted = true; }
+            } else {
+                stamina += 0.2; if(stamina > 100) stamina = 100; if(stamina > 20) isExhausted = false;
+            }
+            document.getElementById('stamina-bar').style.width = stamina + "%";
+
+            // --- PHASE CONTROLLER ---
+            
+            // PHASE 0: CINEMATIC SCRIPTED INTRO
+            if (currentPhase === PHASE_INTRO) {
+                introTimer++;
+                if (introStage === 0) {
+                    showSubtitle("HUHUHU JANCU gua capek banget anjing... Goa b******, monster sialan...", 4000);
+                    introStage = 1;
+                }
+                
+                // Detik ke-4: Tiba-tiba suara tembakan menggelegar!
+                if (introTimer === 200) {
+                    triggerFlash();
+                    scene.remove(wendigo); // Wendigo mati ter-headshot hilang dari map
+                    savior.visible = true; // Penyelamat datang mendekat
+                    introStage = 2;
+                }
+                
+                if (introStage === 2 && introTimer > 210) {
+                    showSubtitle("Orang Asing: 'Lu gak apa-apa kan?! Berdiri, area ini tidak am--'", 3500);
+                    // Kamera pelan-pelan bangun tegak otomatis
+                    camera.rotation.z = Math.max(0, camera.rotation.z - 0.005);
+                    camera.position.y = Math.min(1.75, camera.position.y + 0.015);
+                    if(camera.position.y >= 1.75 && camera.rotation.z <= 0) {
+                        introStage = 3;
+                    }
+                }
+
+                // Detik ke-7: Penyelamat tiba-tiba dicomot The Owl dari langit!
+                if (introTimer === 420) {
+                    theOwl.visible = true;
+                    theOwl.position.set(savior.position.x, 1.7, savior.position.z);
+                    showSubtitle("Orang Asing: 'KREEEAACHH!! AGHHH SIALAN BURUNG HANTU RAKS--!!!'", 3000);
+                    introStage = 4;
+                }
+
+                if (introStage === 4) {
+                    // Penyelamat diseret terbang naik ke atas langit kelam dengan sangat cepat
+                    savior.position.y += 0.3;
+                    theOwl.position.y += 0.3;
+                    if (savior.position.y > 15) {
+                        showSubtitle("SYSTEM: BURUNG HANTU ITU KEMBALI TURUN MEMBURUMU! LARI!!!", 4000);
+                        document.getElementById('status-mode').innerText = "STATUS: DIKEJAR [THE OWL]";
+                        document.getElementById('status-mode').style.color = "#ff1a1a";
+                        currentPhase = PHASE_CHASE;
+                        theOwl.position.set(camera.position.x, 12, camera.position.z - 25); // Posisi mengintai dari atas belakang
+                    }
+                }
+            }
+            
+            // PHASE 1: RUN AWAY ESCAPE CHASE (100 METERS)
+            else if (currentPhase === PHASE_CHASE) {
+                let speed = (move.sprint && !isExhausted) ? 5.5 : 3.0;
+                
+                // Paksa player lari maju lurus melewati terowongan pohon goa hutan
+                if (isMoving) {
+                    camera.position.z -= speed * delta;
+                    chaseDistanceLeft -= speed * delta;
+                    if(chaseDistanceLeft < 0) chaseDistanceLeft = 0;
+                }
+                
+                document.getElementById('task-line').innerText = `KABUR: ${Math.ceil(chaseDistanceLeft)}m`;
+
+                // Kepakan sayap & AI pergerakan The Owl mengejar konstan di belakang atas kepala
+                theOwl.position.z = camera.position.z + 14;
+                theOwl.position.x = camera.position.x + Math.sin(time*3)*2; 
+                theOwl.position.y = 3.5 + Math.cos(time*2)*1; // Sedikit menukik turun naik mendebarkan
+                theOwl.lookAt(camera.position);
+
+                // Jika stamina habis total saat dikejar
+                if (isExhausted) { showSubtitle("Nafas gua habis... asma gua kumat lagi!!", 1000); }
+
+                // SUCCESS KABUR 100 METER
+                if (chaseDistanceLeft <= 0) {
+                    currentPhase = PHASE_EXPLORE;
+                    theOwl.visible = false; // Burung hantu kehilangan jejak masuk ke kegelapan hutan rimba rimbun
+                    showSubtitle("Sepertinya makhluk itu kehilangan jejak gua... Gua aman untuk sekarang.", 5000);
+                    document.getElementById('status-mode').innerText = "STATUS: EKSPLORASI (PETAK 10x10)";
+                    document.getElementById('status-mode').style.color = "#00ff66";
+                    document.getElementById('task-line').innerText = "TUGAS: JELAJAHI AREA KOTAK";
+                }
+            }
+            
+            // PHASE 2: OPEN GRID PETAK EXPLORATION (10x10 FREEDOM GRID)
+            else if (currentPhase === PHASE_EXPLORE) {
+                let speed = (move.sprint && !isExhausted) ? 4.5 : 2.4;
+                const pForward = new THREE.Vector3(camDir.x, 0, camDir.z).normalize();
+                const pSide = new THREE.Vector3().crossVectors(pForward, camera.up).normalize();
+
+                if (move.forward) camera.position.addScaledVector(pForward, speed * delta);
+                if (move.backward) camera.position.addScaledVector(pForward, -speed * delta);
+                if (move.left) camera.position.addScaledVector(pSide, -speed * delta);
+                if (move.right) camera.position.addScaledVector(pSide, speed * delta);
+
+                // Efek Headbobbing Natural saat jalan di tanah hutan
+                if (isMoving) {
+                    camera.position.y = 1.75 + Math.sin(time * 8) * 0.03;
+                } else { camera.position.y = 1.75 + Math.sin(time * 1.5) * 0.005; }
+
+                // BATAS COLLISION ARENA PETAK 10x10 KOTAK HUTAN (Batas transparan dikelilingi pepohonan padat)
+                camera.position.x = Math.max(-13.5, Math.min(13.5, camera.position.x));
+                camera.position.z = Math.max(exploreCenterZ - 13.5, Math.min(exploreCenterZ + 13.5, camera.position.z));
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
