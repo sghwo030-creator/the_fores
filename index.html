@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SHAFT PART 2: THE FOREST (PRO)</title>
+    <title>SHAFT PART 2: THE FOREST (OBJECTIVE UPGRADE)</title>
     <style>
         :root {
             --primary-green: #00ff66;
             --primary-red: #ff1a1a;
+            --purple-glow: #d400ff;
             --bg-dark: #010301;
         }
 
@@ -72,6 +73,7 @@
         /* SCREENS ENDING */
         .end-screen { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; font-weight: bold; z-index: 60; width: 85%; }
         #game-over { color: var(--primary-red); font-size: 30px; text-shadow: 0 0 25px #ff0000; letter-spacing: 2px; }
+        #game-clear { color: #cc00ff; font-size: 34px; text-shadow: 0 0 30px #d400ff; letter-spacing: 4px; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -79,8 +81,8 @@
 
     <div id="main-menu">
         <div class="menu-title">SHAFT PART 2</div>
-        <div class="menu-subtitle">THE FOREST • EVOLUTION STEP</div>
-        <button class="menu-btn" onclick="initForestVolume()">MULAI PART 2</button>
+        <div class="menu-subtitle">THE FOREST • OBJECTIVE SYSTEM</div>
+        <button class="menu-btn" onclick="initForestVolume()">MULAI GAMEPLAY</button>
     </div>
 
     <div id="canvas-container"></div>
@@ -92,7 +94,7 @@
     <div id="ui-hud-wrapper">
         <div id="ui">
             <div id="status-mode" style="font-weight: bold;">STATUS: PINGSAN</div>
-            <div id="task-line" style="margin-top: 5px; color: #aaa;">SISA JARAK: --</div>
+            <div id="task-line" style="margin-top: 5px; color: #fff; font-weight: bold;">SISA JARAK: --</div>
         </div>
         <div id="stamina-container" class="hud-container"><div class="hud-label">STAMINA / ASMA</div><div id="stamina-bar" class="hud-bar"></div></div>
         <div id="battery-container" class="hud-container"><div class="hud-label">SENTER POWER</div><div id="battery-bar" class="hud-bar"></div></div>
@@ -106,7 +108,9 @@
         </div>
     </div>
 
-    <div id="game-over" class="end-screen">BAD ENDING: MATI TERCABIK PARUH OWL<p style="font-size: 13px; color: #777; margin-top: 15px;">Sentuh layar atau Refresh halaman untuk mencoba kembali memori.</p></div>
+    <div id="game-over" class="end-screen">BAD ENDING: MATI TERCABIK PARUH OWL<p style="font-size: 13px; color: #777; margin-top: 15px;">Refresh halaman browser untuk mengulang takdir.</p></div>
+    
+    <div id="game-clear" class="end-screen">PART 2 CLEAR:<br>TO BE CONTINUED<p style="font-size: 14px; color: #aaa; margin-top: 20px; font-family: inherit; line-height: 1.6;">"Lu berhasil mengamankan 3 Telur Gaib di petak hutan ini.<br>Kekuatan The Owl melemah... Cerita akan bersambung!"</p></div>
 
     <script>
         let isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
@@ -118,7 +122,12 @@
         let gameStarted = false, isGameOver = false;
         let introTimer = 0, introStage = 0;
         let chaseDistanceLeft = 100; 
-        let owlDistanceToPlayer = 28; // Jarak awal Owl di belakang player pas ngejar
+        let owlDistanceToPlayer = 28; 
+
+        // Objective State Variables
+        let totalEggsCollected = 0;
+        const targetEggsNeeded = 3;
+        let eggList = [];
 
         let stamina = 100, isExhausted = false;
         let battery = 100, flashlightOn = true;
@@ -135,7 +144,6 @@
         scene.fog = new THREE.FogExp2(0x010502, 0.16); 
 
         const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 500);
-        // Posisi ambruk di tanah dari ending part 1
         camera.position.set(0, 0.35, 0);
         camera.rotation.set(0, 0, 0.5); 
 
@@ -153,7 +161,7 @@
         const ambient = new THREE.AmbientLight(0x020602, 0.08);
         scene.add(ambient);
 
-        // PROCEDURAL GENERATE GROUND TEXTURE
+        // PROCEDURAL GROUND TEXTURE
         function generateGroundTex() {
             const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
             const ctx = canvas.getContext('2d'); ctx.fillStyle = '#060d06'; ctx.fillRect(0,0,512,512);
@@ -169,7 +177,7 @@
         terrain.rotation.x = -Math.PI/2;
         scene.add(terrain);
 
-        // --- ENHANCED MODELS GENERATOR ---
+        // --- MODELS GENERATOR ---
         const blackMat = new THREE.MeshStandardMaterial({ color: 0x030303, roughness: 1.0 });
         
         // 1. Wendigo Old Enemy
@@ -181,7 +189,7 @@
         wendigo.position.set(0, 0, -2.8); 
         scene.add(wendigo);
 
-        // 2. Savior NPC (Orang Asing Ber-helm Senter)
+        // 2. Savior NPC
         const savior = new THREE.Group();
         const sBody = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.75), new THREE.MeshStandardMaterial({color: 0x1a2536, roughness:0.7})); sBody.position.y = 0.85;
         const sHead = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), new THREE.MeshStandardMaterial({color: 0x333, roughness:0.2})); sHead.position.y = 1.8;
@@ -191,7 +199,7 @@
         savior.position.set(1.4, 0, -1.8); savior.lookAt(0,0,0);
         scene.add(savior); savior.visible = false;
 
-        // 3. The Owl (Burung Hantu Raksasa dengan Sayap Mekanik Flapping)
+        // 3. The Owl (Burung Hantu Raksasa)
         const theOwl = new THREE.Group();
         const oBody = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.3, 1.6), blackMat); oBody.rotation.x = Math.PI/3;
         const oHead = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), blackMat); oHead.position.set(0, 0.5, 0.6);
@@ -199,7 +207,6 @@
         const oEyeR = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), new THREE.MeshBasicMaterial({color: 0xff8800})); oEyeR.position.set(0.18, 0.6, 0.9);
         oHead.add(oEyeL, oEyeR);
         
-        // Wing structures for flapping animation
         const wingL = new THREE.Group(); const wingLMesh = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.04, 0.7), blackMat); wingLMesh.position.x = -1.1; wingL.add(wingLMesh);
         const wingR = new THREE.Group(); const wingRMesh = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.04, 0.7), blackMat); wingRMesh.position.x = 1.1; wingR.add(wingRMesh);
         wingL.position.set(-0.4, 0.2, 0); wingR.position.set(0.4, 0.2, 0);
@@ -208,7 +215,7 @@
         theOwl.position.set(0, 20, -10);
         scene.add(theOwl); theOwl.visible = false;
 
-        // 4. Enhanced Tree Spawner WITH PRO-VARIATION
+        // 4. Tree Spawner
         const trunkGeo = new THREE.CylinderGeometry(0.18, 0.28, 8, 5);
         const leavesGeo = new THREE.ConeGeometry(1.8, 5.5, 4);
         const trunkMat = new THREE.MeshStandardMaterial({ color: 0x110b06, roughness: 0.9 });
@@ -219,40 +226,64 @@
             const trunk = new THREE.Mesh(trunkGeo, trunkMat); trunk.position.y = 4;
             const leaves = new THREE.Mesh(leavesGeo, leavesMat); leaves.position.y = 7.5;
             tree.add(trunk, leaves);
-            
-            // Randomize sizes slightly for organic feel
             let scale = 0.85 + Math.random() * 0.4;
             tree.scale.set(scale, scale, scale);
             tree.position.set(x, 0, z);
             scene.add(tree);
         }
 
-        // Jalur pelarian (Chase Corridor Corridor)
-        for(let z = 10; z > -150; z -= 7) {
+        // Chase Corridor
+        for(let z = 10; z > -140; z -= 7) {
             spawnAdvancedTree(-4.8 - Math.random()*1.5, z);
             spawnAdvancedTree(4.8 + Math.random()*1.5, z);
         }
 
-        // Bounded 10x10x10 Exploration Grid Setup (Center at z = -135)
-        let exploreCenterZ = -135;
-        let arenaSize = 14; // Radius batas aman gerakan kotak sekitar 14 unit
+        // Bounded 10x10 Exploration Grid Setup (Center at z = -155)
+        let exploreCenterZ = -155;
+        let arenaSize = 13; // Ukuran petak pembatas kotak
 
         function buildDenseArenaBoundaries() {
-            // Membuat pagar pohon padat melingkari arena kotak 10x10
             for(let x = -arenaSize - 4; x <= arenaSize + 4; x += 2.2) {
-                spawnAdvancedTree(x, exploreCenterZ - arenaSize - 2); // Tembok Utara
-                spawnAdvancedTree(x, exploreCenterZ + arenaSize + 2); // Tembok Selatan
+                spawnAdvancedTree(x, exploreCenterZ - arenaSize - 2); 
+                spawnAdvancedTree(x, exploreCenterZ + arenaSize + 2); 
             }
             for(let z = exploreCenterZ - arenaSize - 2; z <= exploreCenterZ + arenaSize + 2; z += 2.2) {
-                spawnAdvancedTree(-arenaSize - 2, z); // Tembok Barat
-                spawnAdvancedTree(arenaSize + 2, z);  // Tembok Timur
+                spawnAdvancedTree(-arenaSize - 2, z); 
+                spawnAdvancedTree(arenaSize + 2, z);  
             }
-            // Tambahan obstacle pohon acak internal di dalam petak
+            // Beberapa obstacle pohon internal petak
             spawnAdvancedTree(-4, exploreCenterZ - 4);
             spawnAdvancedTree(5, exploreCenterZ + 5);
-            spawnAdvancedTree(-6, exploreCenterZ + 3);
         }
         buildDenseArenaBoundaries();
+
+        // 5. OBJECTIVE BUILDER: GENERATE OWL EGGS (3 Items Scattered)
+        const eggGeo = new THREE.SphereGeometry(0.25, 12, 12);
+        const eggMat = new THREE.MeshStandardMaterial({ 
+            color: 0xaa00ff, 
+            emissive: 0x5500aa, 
+            emissiveIntensity: 3.0, 
+            roughness: 0.2 
+        });
+
+        function spawnObjectiveEgg(x, z) {
+            const egg = new THREE.Mesh(eggGeo, eggMat);
+            egg.scale.set(1, 1.38, 1); // Melar seperti bentuk telur asli
+            egg.position.set(x, 0.35, z);
+            
+            // Tambah point light kecil biar telur terlihat bercahaya di kegelapan kabut
+            const light = new THREE.PointLight(0xd400ff, 1.2, 4);
+            light.position.set(0, 0, 0);
+            egg.add(light);
+
+            scene.add(egg);
+            eggList.push(egg); // Masukkan ke list pantauan collision
+        }
+
+        // Sebarkan 3 telur di titik berbeda di dalam area petak 10x10
+        spawnObjectiveEgg(-7, exploreCenterZ - 6); // Kiri Depan
+        spawnObjectiveEgg(7, exploreCenterZ + 5);  // Kanan Belakang
+        spawnObjectiveEgg(0, exploreCenterZ - 8);  // Tengah Dalam
 
         // --- GAMEPLAY FLOW HANDLERS ---
         function initForestVolume() {
@@ -275,7 +306,7 @@
             if(duration) setTimeout(() => { if(subtitles.innerText === msg) subtitles.style.opacity = 0; }, duration);
         }
 
-        // --- INTERACTIVE CONTROLS ENGINE ---
+        // --- CONTROLS ENGINE ---
         if(!isMobile) {
             document.addEventListener('mousemove', (e) => {
                 if(!gameStarted || isGameOver || currentPhase === PHASE_INTRO) return;
@@ -300,7 +331,6 @@
                 if(e.key === 'Shift') move.sprint = false;
             });
         } else {
-            // RESPONSIVE VIRTUAL JOYSTICK MOBILE
             let jZone = document.getElementById('joystick-zone'), jKnob = document.getElementById('joystick-knob');
             let joyId = null, cx = 0, cy = 0;
             jZone.addEventListener('touchstart', (e) => {
@@ -319,7 +349,6 @@
             }, {passive:true});
             jZone.addEventListener('touchend', () => { joyId = null; jKnob.style.transform = 'translate(0,0)'; move.forward = move.backward = move.left = move.right = false; });
             
-            // MOBILE CAMERA USAP SCREEN LOOK TOUCH
             let lookTouchId = null, lastLX = 0, lastLY = 0;
             window.addEventListener('touchstart', (e) => {
                 if(currentPhase === PHASE_INTRO) return;
@@ -348,29 +377,28 @@
 
         let clock = new THREE.Clock();
 
-        // --- LOOP UTAMA ENGINE ---
+        // --- MAIN ENGINE LOOP ---
         function animate() {
             requestAnimationFrame(animate);
             if (!gameStarted || isGameOver) { renderer.render(scene, camera); return; }
 
-            const delta = Math.min(0.1, clock.getDelta()); // Cap delta mencegah lompatan koordinat bug
+            const delta = Math.min(0.1, clock.getDelta()); 
             const time = clock.getElapsedTime();
 
-            // INTERACTIVE FLASHLIGHT LOGIC & FLICKER EFFECT
+            // FLASHLIGHT ENGINE
             flashlight.position.copy(camera.position);
             const actualCamDir = new THREE.Vector3(); camera.getWorldDirection(actualCamDir);
             flashlight.target.position.copy(camera.position).add(actualCamDir);
             
             if (flashlightOn && battery > 0) {
                 battery -= 0.035;
-                // Senter mulai berkedip acak kalau dikejar Owl di bawah jarak 15 meter
                 if (currentPhase === PHASE_CHASE && owlDistanceToPlayer < 15 && Math.random() > 0.82) {
                     flashlight.intensity = 0.5;
                 } else { flashlight.intensity = 8.0; }
             } else { flashlight.intensity = 0; flashlightOn = false; }
             document.getElementById('battery-bar').style.width = battery + "%";
 
-            // SYSTEM MANAGING ASMA STAMINA
+            // STAMINA SYSTEM
             let isMoving = (move.forward || move.backward || move.left || move.right);
             if (move.sprint && isMoving && !isExhausted) {
                 stamina -= 0.18; if (stamina <= 0) { stamina = 0; isExhausted = true; }
@@ -379,9 +407,9 @@
             }
             document.getElementById('stamina-bar').style.width = stamina + "%";
 
-            // --- PHASE STATE CONTROLLER ---
+            // --- PHASE CONTROLLER ---
             
-            // PHASE 0: CINEMATIC SCRIPTED INTRO
+            // PHASE 0: SCRIPTED INTRO
             if (currentPhase === PHASE_INTRO) {
                 introTimer++;
                 if (introStage === 0) {
@@ -389,34 +417,28 @@
                     introStage = 1;
                 }
                 
-                // Detik ke-3.5: Suara Headshot Pistol Menggelegar!
                 if (introTimer === 160) {
                     playScreenFlash();
-                    scene.remove(wendigo); // Wendigo ter-headshot lenyap
-                    savior.visible = true; // Penyelamat muncul
+                    scene.remove(wendigo); 
+                    savior.visible = true; 
                     introStage = 2;
                 }
                 
                 if (introStage === 2 && introTimer > 170) {
                     displaySubtitle("Orang Asing: 'Lu gak apa-apa kan?! Berdiri, area ini tidak am--'", 3200);
-                    // Kamera otomatis bangun tegak perlahan
                     camera.rotation.z = Math.max(0, camera.rotation.z - 0.006);
                     camera.position.y = Math.min(1.75, camera.position.y + 0.018);
-                    if(camera.position.y >= 1.75 && camera.rotation.z <= 0) {
-                        introStage = 3;
-                    }
+                    if(camera.position.y >= 1.75 && camera.rotation.z <= 0) introStage = 3;
                 }
 
-                // Detik ke-7: Penyelamat tersambar The Owl terbang!
                 if (introTimer === 350) {
                     theOwl.visible = true;
                     theOwl.position.set(savior.position.x, 1.75, savior.position.z);
-                    displaySubtitle("Orang Asing: 'KREEEAAACHH!! AGHHH SIALAN BURUNG HANTU RAKS--!!!'", 3000);
+                    displaySubtitle("Orang Asing: 'KREEEAACHH!! AGHHH SIALAN BURUNG HANTU RAKS--!!!'", 3000);
                     introStage = 4;
                 }
 
                 if (introStage === 4) {
-                    // Penyelamat dan burung diseret vertikal ke langit dengan sangat cepat
                     savior.position.y += 0.4;
                     theOwl.position.y += 0.4;
                     if (savior.position.y > 22) {
@@ -424,50 +446,40 @@
                         document.getElementById('status-mode').innerText = "STATUS: DIKEJAR [THE OWL]";
                         document.getElementById('status-mode').style.color = "var(--primary-red)";
                         currentPhase = PHASE_CHASE;
-                        // Letakkan Owl mengintai di belakang atas kepala player
                         theOwl.position.set(camera.position.x, 6, camera.position.z + owlDistanceToPlayer);
                     }
                 }
             }
             
-            // PHASE 1: ACTIVE ESCAPE CHASE CHASE (100 METERS)
+            // PHASE 1: CHASE (100 METERS)
             else if (currentPhase === PHASE_CHASE) {
                 let pSpeed = (move.sprint && !isExhausted) ? 5.8 : 3.2;
                 
-                // Player harus menekan MAJU/LARI secara aktif untuk menggerakkan koordinat kabur
                 if (move.forward) {
                     camera.position.z -= pSpeed * delta;
                     chaseDistanceLeft -= pSpeed * delta;
                     if(chaseDistanceLeft < 0) chaseDistanceLeft = 0;
-                    
-                    // Jarak Owl stabil/menjauh dikit kalau player lari cepat
                     owlDistanceToPlayer += (move.sprint && !isExhausted) ? 0.02 : -0.01;
                 } else {
-                    // Kalau diam, Owl mendekat dengan cepat!
                     owlDistanceToPlayer -= 0.08;
                 }
 
-                // AI The Owl mengejar di belakang atas kepala
                 theOwl.position.z = camera.position.z + owlDistanceToPlayer;
                 theOwl.position.x = camera.position.x + Math.sin(time * 4.0) * 1.5; 
                 theOwl.position.y = 3.8 + Math.cos(time * 3.0) * 0.8; 
                 theOwl.lookAt(camera.position);
 
-                // ANIMASI FLAPPING WINGS (Mengepak Sayap Konstan Berdasarkan Sinus)
                 wingL.rotation.z = Math.sin(time * 12.0) * 0.6;
                 wingR.rotation.z = -Math.sin(time * 12.0) * 0.6;
 
                 document.getElementById('task-line').innerText = `KABUR: ${Math.ceil(chaseDistanceLeft)} METER LAGI`;
 
-                // DEFINE MECHANICAL JUMPSCARE / FAIL STATE
+                // FAIL JUMPSCARE CHECK
                 if (owlDistanceToPlayer <= 1.2) {
                     isGameOver = true;
                     if(!isMobile) document.exitPointerLock();
                     document.getElementById('mobile-ui').style.display = 'none';
                     document.getElementById('game-over').style.display = 'block';
-                    displaySubtitle("", 10);
-                    
-                    // Efek guncangan kamera hancur
                     camera.position.set(theOwl.position.x, 1.5, theOwl.position.z - 0.5);
                     camera.lookAt(theOwl.position);
                     let shake = () => {
@@ -479,18 +491,18 @@
                     return;
                 }
 
-                // SUCCESS KABUR 100 METER
+                // SUCCESS CHASE PHASE
                 if (chaseDistanceLeft <= 0) {
                     currentPhase = PHASE_EXPLORE;
-                    theOwl.visible = false; // Burung hantu kehilangan jejak masuk rimbun hutan
-                    displaySubtitle("Hah... Hah... Sepertinya gua berhasil lolos dari burung gila itu. Gua harus periksa area sekitar.", 5000);
-                    document.getElementById('status-mode').innerText = "STATUS: EKSPLORASI (PETAK 10x10)";
+                    theOwl.visible = false; 
+                    displaySubtitle("Hah... Hah... Gua lolos. Tapi hutan ini dikurung barisan pohon padat. Ada apa di sini?", 5000);
+                    document.getElementById('status-mode').innerText = "STATUS: PETAK 10x10";
                     document.getElementById('status-mode').style.color = "var(--primary-green)";
-                    document.getElementById('task-line').innerText = "MISI: JELAJAHI KLIPING PETAK HUTAN";
+                    document.getElementById('task-line').innerText = `MISI: AMBIL TELUR GAIB (${totalEggsCollected}/${targetEggsNeeded})`;
                 }
             }
             
-            // PHASE 2: GRID EXPLORATION MODE WITH IMPENETRABLE WALL WARNINGS
+            // PHASE 2: EXPLORATION + OBJECTIVE COLLECTION SYSTEM
             else if (currentPhase === PHASE_EXPLORE) {
                 let pSpeed = (move.sprint && !isExhausted) ? 4.2 : 2.4;
                 const forwardVec = new THREE.Vector3(actualCamDir.x, 0, actualCamDir.z).normalize();
@@ -501,12 +513,43 @@
                 if (move.left) camera.position.addScaledVector(sideVec, -pSpeed * delta);
                 if (move.right) camera.position.addScaledVector(sideVec, pSpeed * delta);
 
-                // Natural Headbobbing Gerakan Langkah Kaki
+                // Headbobbing
                 if (isMoving) {
                     camera.position.y = 1.75 + Math.sin(time * 7.5) * 0.035;
                 } else { camera.position.y = 1.75 + Math.sin(time * 1.2) * 0.005; }
 
-                // LOGIC BOUNDARY COLLISION CHECK (LIMIT TO THE 10x10 RADIUS ARENA)
+                // COLLISION CHECK DENGAN TELUR GAIB OWL
+                for (let i = eggList.length - 1; i >= 0; i--) {
+                    let egg = eggList[i];
+                    let distToEgg = camera.position.distanceTo(egg.position);
+                    
+                    // Membuat animasi telur melayang naik-turun halus (floating effect)
+                    egg.position.y = 0.35 + Math.sin(time * 3.0 + i) * 0.08;
+                    egg.rotation.y += 0.02;
+
+                    // Jika player menyentuh/mendekati koordinat telur
+                    if (distToEgg < 1.4) {
+                        playScreenFlash(); // Beri kilatan layar tanda terambil
+                        scene.remove(egg);  // Hilangkan dari dunia 3D
+                        eggList.splice(i, 1); // Hapus dari pantauan array
+                        
+                        totalEggsCollected++;
+                        document.getElementById('task-line').innerText = `MISI: AMBIL TELUR GAIB (${totalEggsCollected}/${targetEggsNeeded})`;
+                        displaySubtitle(`Lu menemukan Telur Gaib Owl! (${totalEggsCollected}/${targetEggsNeeded})`, 3000);
+
+                        // WIN CONDITION DETECTOR (SEMUA TELUR TERKUMPUL)
+                        if (totalEggsCollected >= targetEggsNeeded) {
+                            isGameOver = true; // Stop loop main gameplay
+                            if(!isMobile) document.exitPointerLock();
+                            document.getElementById('mobile-ui').style.display = 'none';
+                            document.getElementById('game-clear').style.display = 'block'; // Tampilkan layar bersambung
+                            document.getElementById('status-mode').innerText = "STATUS: CLEAR";
+                            return;
+                        }
+                    }
+                }
+
+                // BOUNDARY CHECK PETAK ARENA
                 let hitWall = false;
                 if (camera.position.x <= -arenaSize || camera.position.x >= arenaSize || 
                     camera.position.z <= (exploreCenterZ - arenaSize) || camera.position.z >= (exploreCenterZ + arenaSize)) {
@@ -514,11 +557,8 @@
                 }
 
                 if (hitWall) {
-                    // Beri feedback visual layar memerah/glitch tanda tertahan dinding pohon padat
                     glitchOverlay.style.background = "rgba(255, 0, 0, 0.25)";
-                    displaySubtitle("Hutannya terlalu padat dan gelap... Gua bakal tersesat kalau maksa lewat sini.", 1000);
-                    
-                    // Kunci posisi paksa di koordinat batas aman kotak
+                    displaySubtitle("Hutannya terlalu padat... Gua bakal tersesat kalau jalan nembus ke luar area petak.", 1000);
                     camera.position.x = Math.max(-arenaSize, Math.min(arenaSize, camera.position.x));
                     camera.position.z = Math.max(exploreCenterZ - arenaSize, Math.min(exploreCenterZ + arenaSize, camera.position.z));
                 } else {
