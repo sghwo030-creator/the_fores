@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SHAFT PART 2: THE FOREST (OBJECTIVE UPGRADE)</title>
+    <title>SHAFT PART 2: THE FOREST (INFINITE FLASHLIGHT)</title>
     <style>
         :root {
             --primary-green: #00ff66;
@@ -81,7 +81,7 @@
 
     <div id="main-menu">
         <div class="menu-title">SHAFT PART 2</div>
-        <div class="menu-subtitle">THE FOREST • OBJECTIVE SYSTEM</div>
+        <div class="menu-subtitle">THE FOREST • INFINITE POWER</div>
         <button class="menu-btn" onclick="initForestVolume()">MULAI GAMEPLAY</button>
     </div>
 
@@ -97,7 +97,7 @@
             <div id="task-line" style="margin-top: 5px; color: #fff; font-weight: bold;">SISA JARAK: --</div>
         </div>
         <div id="stamina-container" class="hud-container"><div class="hud-label">STAMINA / ASMA</div><div id="stamina-bar" class="hud-bar"></div></div>
-        <div id="battery-container" class="hud-container"><div class="hud-label">SENTER POWER</div><div id="battery-bar" class="hud-bar"></div></div>
+        <div id="battery-container" class="hud-container"><div class="hud-label">SENTER POWER (∞)</div><div id="battery-bar" class="hud-bar"></div></div>
     </div>
 
     <div id="mobile-ui">
@@ -110,6 +110,7 @@
 
     <div id="game-over" class="end-screen">BAD ENDING: MATI TERCABIK PARUH OWL<p style="font-size: 13px; color: #777; margin-top: 15px;">Refresh halaman browser untuk mengulang takdir.</p></div>
     
+    <!-- SCREEN WIN / BERSAMBUNG -->
     <div id="game-clear" class="end-screen">PART 2 CLEAR:<br>TO BE CONTINUED<p style="font-size: 14px; color: #aaa; margin-top: 20px; font-family: inherit; line-height: 1.6;">"Lu berhasil mengamankan 3 Telur Gaib di petak hutan ini.<br>Kekuatan The Owl melemah... Cerita akan bersambung!"</p></div>
 
     <script>
@@ -130,7 +131,7 @@
         let eggList = [];
 
         let stamina = 100, isExhausted = false;
-        let battery = 100, flashlightOn = true;
+        let battery = 100, flashlightOn = true; // Baterai di-set konstan 100
         const move = { forward: false, backward: false, left: false, right: false, sprint: false };
 
         const container = document.getElementById('canvas-container');
@@ -240,7 +241,7 @@
 
         // Bounded 10x10 Exploration Grid Setup (Center at z = -155)
         let exploreCenterZ = -155;
-        let arenaSize = 13; // Ukuran petak pembatas kotak
+        let arenaSize = 13; 
 
         function buildDenseArenaBoundaries() {
             for(let x = -arenaSize - 4; x <= arenaSize + 4; x += 2.2) {
@@ -251,7 +252,6 @@
                 spawnAdvancedTree(-arenaSize - 2, z); 
                 spawnAdvancedTree(arenaSize + 2, z);  
             }
-            // Beberapa obstacle pohon internal petak
             spawnAdvancedTree(-4, exploreCenterZ - 4);
             spawnAdvancedTree(5, exploreCenterZ + 5);
         }
@@ -268,22 +268,20 @@
 
         function spawnObjectiveEgg(x, z) {
             const egg = new THREE.Mesh(eggGeo, eggMat);
-            egg.scale.set(1, 1.38, 1); // Melar seperti bentuk telur asli
+            egg.scale.set(1, 1.38, 1); 
             egg.position.set(x, 0.35, z);
             
-            // Tambah point light kecil biar telur terlihat bercahaya di kegelapan kabut
             const light = new THREE.PointLight(0xd400ff, 1.2, 4);
             light.position.set(0, 0, 0);
             egg.add(light);
 
             scene.add(egg);
-            eggList.push(egg); // Masukkan ke list pantauan collision
+            eggList.push(egg); 
         }
 
-        // Sebarkan 3 telur di titik berbeda di dalam area petak 10x10
-        spawnObjectiveEgg(-7, exploreCenterZ - 6); // Kiri Depan
-        spawnObjectiveEgg(7, exploreCenterZ + 5);  // Kanan Belakang
-        spawnObjectiveEgg(0, exploreCenterZ - 8);  // Tengah Dalam
+        spawnObjectiveEgg(-7, exploreCenterZ - 6); 
+        spawnObjectiveEgg(7, exploreCenterZ + 5);  
+        spawnObjectiveEgg(0, exploreCenterZ - 8);  
 
         // --- GAMEPLAY FLOW HANDLERS ---
         function initForestVolume() {
@@ -390,12 +388,12 @@
             const actualCamDir = new THREE.Vector3(); camera.getWorldDirection(actualCamDir);
             flashlight.target.position.copy(camera.position).add(actualCamDir);
             
-            if (flashlightOn && battery > 0) {
-                battery -= 0.035;
+            // MODIFIKASI: Baterai infiniti (tidak berkurang)
+            if (flashlightOn) {
                 if (currentPhase === PHASE_CHASE && owlDistanceToPlayer < 15 && Math.random() > 0.82) {
                     flashlight.intensity = 0.5;
                 } else { flashlight.intensity = 8.0; }
-            } else { flashlight.intensity = 0; flashlightOn = false; }
+            } else { flashlight.intensity = 0; }
             document.getElementById('battery-bar').style.width = battery + "%";
 
             // STAMINA SYSTEM
@@ -523,26 +521,23 @@
                     let egg = eggList[i];
                     let distToEgg = camera.position.distanceTo(egg.position);
                     
-                    // Membuat animasi telur melayang naik-turun halus (floating effect)
                     egg.position.y = 0.35 + Math.sin(time * 3.0 + i) * 0.08;
                     egg.rotation.y += 0.02;
 
-                    // Jika player menyentuh/mendekati koordinat telur
                     if (distToEgg < 1.4) {
-                        playScreenFlash(); // Beri kilatan layar tanda terambil
-                        scene.remove(egg);  // Hilangkan dari dunia 3D
-                        eggList.splice(i, 1); // Hapus dari pantauan array
+                        playScreenFlash(); 
+                        scene.remove(egg);  
+                        eggList.splice(i, 1); 
                         
                         totalEggsCollected++;
                         document.getElementById('task-line').innerText = `MISI: AMBIL TELUR GAIB (${totalEggsCollected}/${targetEggsNeeded})`;
                         displaySubtitle(`Lu menemukan Telur Gaib Owl! (${totalEggsCollected}/${targetEggsNeeded})`, 3000);
 
-                        // WIN CONDITION DETECTOR (SEMUA TELUR TERKUMPUL)
                         if (totalEggsCollected >= targetEggsNeeded) {
-                            isGameOver = true; // Stop loop main gameplay
+                            isGameOver = true; 
                             if(!isMobile) document.exitPointerLock();
                             document.getElementById('mobile-ui').style.display = 'none';
-                            document.getElementById('game-clear').style.display = 'block'; // Tampilkan layar bersambung
+                            document.getElementById('game-clear').style.display = 'block'; 
                             document.getElementById('status-mode').innerText = "STATUS: CLEAR";
                             return;
                         }
