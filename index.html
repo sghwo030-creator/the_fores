@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SHAFT PART 2: THE FOREST (INFINITE FLASHLIGHT)</title>
+    <title>SHAFT PART 2: EXTENDED STORY UPGRADE</title>
     <style>
         :root {
             --primary-green: #00ff66;
@@ -27,11 +27,10 @@
             z-index: 100;
         }
         .menu-title {
-            font-size: 46px; color: var(--primary-green); letter-spacing: 10px; margin-bottom: 5px;
+            font-size: 40px; color: var(--primary-green); letter-spacing: 8px; margin-bottom: 5px;
             font-weight: 900; text-align: center; text-shadow: 0 0 20px rgba(0,255,100,0.3);
-            animation: pulseGlow 2.5s infinite alternate;
         }
-        .menu-subtitle { color: #444; font-size: 11px; margin-bottom: 40px; letter-spacing: 4px; text-transform: uppercase; }
+        .menu-subtitle { color: #555; font-size: 11px; margin-bottom: 40px; letter-spacing: 3px; text-transform: uppercase; }
         .menu-btn {
             background: rgba(0, 20, 5, 0.6); border: 1px solid #00aa40; color: #ccc;
             padding: 14px 40px; font-size: 13px; font-family: inherit; font-weight: bold;
@@ -39,11 +38,6 @@
             transition: all 0.3s ease;
         }
         .menu-btn:hover { background: #00aa40; color: #000; box-shadow: 0 0 25px var(--primary-green); }
-
-        @keyframes pulseGlow {
-            0% { transform: scale(1); opacity: 0.9; }
-            100% { transform: scale(1.03); opacity: 1; }
-        }
 
         /* HUD WRAPPER */
         #ui-hud-wrapper {
@@ -56,24 +50,42 @@
         #battery-bar { background: #00ffcc; }
         .hud-label { position: absolute; top: -15px; left: 0; font-size: 9px; font-weight: bold; letter-spacing: 1px; text-shadow: 1px 1px 2px #000; }
         
+        /* RADAR MINIMAP UI */
+        #minimap-container {
+            position: absolute; top: 20px; right: 20px; width: 120px; height: 120px;
+            background: rgba(0, 10, 3, 0.75); border: 2px solid var(--primary-green);
+            border-radius: 6px; z-index: 10; display: none; box-shadow: 0 0 15px rgba(0,255,100,0.2);
+        }
+        #minimap-canvas { width: 100%; height: 100%; }
+
+        /* DIRECTION ARROW HUD */
+        #arrow-hud {
+            position: absolute; top: 160px; left: 20px; width: 80px; text-align: center; display: none; z-index: 10;
+        }
+        #arrow-img {
+            width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent;
+            border-bottom: 22px solid #ffff00; margin: 8px auto; transform-origin: 50% 50%;
+            filter: drop-shadow(0px 0px 6px #ffff00);
+        }
+
         /* SCREEN OVERLAYS */
         #vignette { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: radial-gradient(circle, rgba(0,0,0,0) 15%, rgba(0,0,0,0.98) 100%); pointer-events: none; z-index: 4; display: none; }
         #glitch-overlay { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 0, 0, 0); pointer-events: none; z-index: 5; transition: background 0.2s; }
         #flash-screen { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: #fff; pointer-events: none; z-index: 6; opacity: 0; transition: opacity 0.1s; }
-        #subtitles { position: absolute; bottom: 22%; left: 50%; transform: translateX(-50%); color: #ffffff; font-size: 16px; text-align: center; text-shadow: 0 0 8px #000, 0 0 12px var(--primary-green); z-index: 15; pointer-events: none; width: 85%; font-weight: bold; opacity: 0; transition: opacity 0.2s; }
+        #subtitles { position: absolute; bottom: 22%; left: 50%; transform: translateX(-50%); color: #ffffff; font-size: 15px; text-align: center; text-shadow: 0 0 8px #000, 0 0 12px var(--primary-green); z-index: 15; pointer-events: none; width: 85%; font-weight: bold; opacity: 0; transition: opacity 0.2s; line-height: 1.4; }
         
-        /* MOBILE UI CONTROLS */
+        /* MOBILE CONTROLS */
         #mobile-ui { display: none; position: absolute; bottom: 0; left: 0; width: 100vw; height: 180px; z-index: 50; pointer-events: none; }
         #joystick-zone { position: absolute; bottom: 25px; left: 25px; width: 110px; height: 110px; background: rgba(255,255,255,0.02); border: 2px solid rgba(0,255,100,0.2); border-radius: 50%; pointer-events: auto; }
         #joystick-knob { position: absolute; top: 35px; left: 35px; width: 40px; height: 40px; background: rgba(0, 255, 100, 0.25); border: 1px solid var(--primary-green); border-radius: 50%; }
         #mobile-buttons { position: absolute; bottom: 25px; right: 25px; display: flex; gap: 15px; pointer-events: auto; }
-        .m-btn { width: 65px; height: 65px; background: rgba(0, 15, 5, 0.85); border: 1px solid #00aa40; color: #fff; border-radius: 50%; font-size: 10px; font-weight: bold; display: flex; justify-content: center; align-items: center; text-align: center; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-        .m-btn:active { background: var(--primary-green); color: #000; box-shadow: 0 0 15px var(--primary-green); }
+        .m-btn { width: 65px; height: 65px; background: rgba(0, 15, 5, 0.85); border: 1px solid #00aa40; color: #fff; border-radius: 50%; font-size: 10px; font-weight: bold; display: flex; justify-content: center; align-items: center; text-align: center; }
+        .m-btn:active { background: var(--primary-green); color: #000; }
 
-        /* SCREENS ENDING */
+        /* END SCREENS */
         .end-screen { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; font-weight: bold; z-index: 60; width: 85%; }
-        #game-over { color: var(--primary-red); font-size: 30px; text-shadow: 0 0 25px #ff0000; letter-spacing: 2px; }
-        #game-clear { color: #cc00ff; font-size: 34px; text-shadow: 0 0 30px #d400ff; letter-spacing: 4px; }
+        #game-over { color: var(--primary-red); font-size: 28px; text-shadow: 0 0 25px #ff0000; letter-spacing: 2px; }
+        #game-clear { color: #00ffcc; font-size: 32px; text-shadow: 0 0 30px #00ffaa; letter-spacing: 4px; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -81,8 +93,8 @@
 
     <div id="main-menu">
         <div class="menu-title">SHAFT PART 2</div>
-        <div class="menu-subtitle">THE FOREST • INFINITE POWER</div>
-        <button class="menu-btn" onclick="initForestVolume()">MULAI GAMEPLAY</button>
+        <div class="menu-subtitle">THE FOREST • EXTENDED PLOT</div>
+        <button class="menu-btn" onclick="initForestVolume()">MULAI PETUALANGAN</button>
     </div>
 
     <div id="canvas-container"></div>
@@ -97,7 +109,16 @@
             <div id="task-line" style="margin-top: 5px; color: #fff; font-weight: bold;">SISA JARAK: --</div>
         </div>
         <div id="stamina-container" class="hud-container"><div class="hud-label">STAMINA / ASMA</div><div id="stamina-bar" class="hud-bar"></div></div>
-        <div id="battery-container" class="hud-container"><div class="hud-label">SENTER POWER (∞)</div><div id="battery-bar" class="hud-bar"></div></div>
+        <div id="battery-container" class="hud-container"><div class="hud-label">SENTER BATTERY (SLO-DRAIN)</div><div id="battery-bar" class="hud-bar"></div></div>
+    </div>
+
+    <div id="minimap-container">
+        <canvas id="minimap-canvas" width="120" height="120"></canvas>
+    </div>
+
+    <div id="arrow-hud">
+        <div style="font-size: 8px; font-weight: bold; color: #ffff00; letter-spacing: 1px;">POLISI</div>
+        <div id="arrow-img"></div>
     </div>
 
     <div id="mobile-ui">
@@ -108,30 +129,32 @@
         </div>
     </div>
 
-    <div id="game-over" class="end-screen">BAD ENDING: MATI TERCABIK PARUH OWL<p style="font-size: 13px; color: #777; margin-top: 15px;">Refresh halaman browser untuk mengulang takdir.</p></div>
+    <div id="game-over" class="end-screen">BAD ENDING<p id="game-over-reason" style="font-size: 18px; color: #ff5555;"></p><p style="font-size: 12px; color: #666; margin-top: 15px;">Refresh halaman browser untuk mencoba lagi.</p></div>
     
-    <!-- SCREEN WIN / BERSAMBUNG -->
-    <div id="game-clear" class="end-screen">PART 2 CLEAR:<br>TO BE CONTINUED<p style="font-size: 14px; color: #aaa; margin-top: 20px; font-family: inherit; line-height: 1.6;">"Lu berhasil mengamankan 3 Telur Gaib di petak hutan ini.<br>Kekuatan The Owl melemah... Cerita akan bersambung!"</p></div>
+    <div id="game-clear" class="end-screen">SHAFT PART 2 COMPLETE<p style="font-size: 14px; color: #aaa; margin-top: 20px; font-family: inherit; line-height: 1.6;">"Lu berhasil kembali ke TKP penembakan polisi.<br>Dengan informasi dari Masaver, misteri ini semakin dalam... Bersambung ke Part 3!"</p></div>
 
     <script>
         let isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
         let mouseSensitivity = 0.0018;
 
-        const PHASE_INTRO = 0, PHASE_CHASE = 1, PHASE_EXPLORE = 2;
+        // ALL STORY PHASES
+        const PHASE_INTRO = 0, PHASE_CHASE = 1, PHASE_EXPLORE = 2, PHASE_CHASE_2 = 3, PHASE_MASAVER = 4, PHASE_WENDIGO = 5, PHASE_HIDE = 6, PHASE_RETURN = 7;
         let currentPhase = PHASE_INTRO;
 
         let gameStarted = false, isGameOver = false;
         let introTimer = 0, introStage = 0;
         let chaseDistanceLeft = 100; 
+        let chase2DistanceLeft = 80;
         let owlDistanceToPlayer = 28; 
+        let actionTimer = 0, hideProgress = 0;
 
-        // Objective State Variables
         let totalEggsCollected = 0;
         const targetEggsNeeded = 3;
         let eggList = [];
+        let treePositions = [];
 
         let stamina = 100, isExhausted = false;
-        let battery = 100, flashlightOn = true; // Baterai di-set konstan 100
+        let battery = 100, flashlightOn = true; 
         const move = { forward: false, backward: false, left: false, right: false, sprint: false };
 
         const container = document.getElementById('canvas-container');
@@ -139,6 +162,7 @@
         const glitchOverlay = document.getElementById('glitch-overlay');
         const subtitles = document.getElementById('subtitles');
         const hudWrapper = document.getElementById('ui-hud-wrapper');
+        const minimapCanvas = document.getElementById('minimap-canvas');
 
         // --- THREE.JS ENGINE INITIALIZATION ---
         const scene = new THREE.Scene();
@@ -162,7 +186,7 @@
         const ambient = new THREE.AmbientLight(0x020602, 0.08);
         scene.add(ambient);
 
-        // PROCEDURAL GROUND TEXTURE
+        // GROUND TEXTURE
         function generateGroundTex() {
             const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
             const ctx = canvas.getContext('2d'); ctx.fillStyle = '#060d06'; ctx.fillRect(0,0,512,512);
@@ -174,49 +198,54 @@
             return new THREE.CanvasTexture(canvas);
         }
         const groundMat = new THREE.MeshStandardMaterial({ color: 0x080f08, map: generateGroundTex(), roughness: 0.95 });
-        const terrain = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), groundMat);
+        const terrain = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), groundMat);
         terrain.rotation.x = -Math.PI/2;
         scene.add(terrain);
 
-        // --- MODELS GENERATOR ---
+        // MODELS MATERIAL
         const blackMat = new THREE.MeshStandardMaterial({ color: 0x030303, roughness: 1.0 });
         
-        // 1. Wendigo Old Enemy
+        // 1. Original Wendigo Mesh
         const wendigo = new THREE.Group();
         const wBody = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.03, 2.6), blackMat); wBody.position.y = 1.3;
         const wHead = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 6), blackMat); wHead.position.y = 2.7;
         const wEye = new THREE.Mesh(new THREE.SphereGeometry(0.04, 4, 4), new THREE.MeshBasicMaterial({color: 0xff0000})); wEye.position.set(0, 2.7, 0.12);
-        wendigo.add(wBody, wHead, wEye);
-        wendigo.position.set(0, 0, -2.8); 
-        scene.add(wendigo);
+        wendigo.add(wBody, wHead, wEye); wendigo.position.set(0, 0, -2.8); scene.add(wendigo);
 
-        // 2. Savior NPC
+        // 2. Police Savior Mesh
         const savior = new THREE.Group();
-        const sBody = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.75), new THREE.MeshStandardMaterial({color: 0x1a2536, roughness:0.7})); sBody.position.y = 0.85;
-        const sHead = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), new THREE.MeshStandardMaterial({color: 0x333, roughness:0.2})); sHead.position.y = 1.8;
-        const sLight = new THREE.SpotLight(0xffffff, 8.0, 25, Math.PI/4); sLight.position.set(0, 1.8, 0.1); savior.add(sLight);
-        sLight.target = new THREE.Object3D(); sLight.target.position.set(0, 0, -5); savior.add(sLight.target);
-        savior.add(sBody, sHead);
-        savior.position.set(1.4, 0, -1.8); savior.lookAt(0,0,0);
-        scene.add(savior); savior.visible = false;
+        const sBody = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.75), new THREE.MeshStandardMaterial({color: 0x1a2536})); sBody.position.y = 0.85;
+        const sHead = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), new THREE.MeshStandardMaterial({color: 0x333})); sHead.position.y = 1.8;
+        savior.add(sBody, sHead); savior.position.set(1.4, 0, -1.8); savior.lookAt(0,0,0); scene.add(savior); savior.visible = false;
 
-        // 3. The Owl (Burung Hantu Raksasa)
+        // 3. The Owl Mesh
         const theOwl = new THREE.Group();
         const oBody = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.3, 1.6), blackMat); oBody.rotation.x = Math.PI/3;
         const oHead = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), blackMat); oHead.position.set(0, 0.5, 0.6);
         const oEyeL = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), new THREE.MeshBasicMaterial({color: 0xff8800})); oEyeL.position.set(-0.18, 0.6, 0.9);
         const oEyeR = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), new THREE.MeshBasicMaterial({color: 0xff8800})); oEyeR.position.set(0.18, 0.6, 0.9);
         oHead.add(oEyeL, oEyeR);
-        
         const wingL = new THREE.Group(); const wingLMesh = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.04, 0.7), blackMat); wingLMesh.position.x = -1.1; wingL.add(wingLMesh);
         const wingR = new THREE.Group(); const wingRMesh = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.04, 0.7), blackMat); wingRMesh.position.x = 1.1; wingR.add(wingRMesh);
         wingL.position.set(-0.4, 0.2, 0); wingR.position.set(0.4, 0.2, 0);
+        theOwl.add(oBody, oHead, wingL, wingR); theOwl.position.set(0, 20, -10); scene.add(theOwl); theOwl.visible = false;
 
-        theOwl.add(oBody, oHead, wingL, wingR);
-        theOwl.position.set(0, 20, -10);
-        scene.add(theOwl); theOwl.visible = false;
+        // NEW CHARACTER: Masaver (Survivalist Specialist)
+        const masaver = new THREE.Group();
+        const mBody = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.7), new THREE.MeshStandardMaterial({color: 0x2e4a25, roughness: 0.8})); mBody.position.y = 0.85;
+        const mHead = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), new THREE.MeshStandardMaterial({color: 0xddaa88})); mHead.position.y = 1.75;
+        const backpack = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.5, 0.2), new THREE.MeshStandardMaterial({color: 0x4a3b25})); backpack.position.set(0, 0.9, -0.15);
+        masaver.add(mBody, mHead, backpack); scene.add(masaver); masaver.visible = false;
 
-        // 4. Tree Spawner
+        // ENEMY RE-BUILD: Damaged Wendigo (One-eyed, claw scarred)
+        const wendigoDamaged = new THREE.Group();
+        const wdBody = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.03, 2.6), blackMat); wdBody.position.y = 1.3;
+        const wdHead = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 6), blackMat); wdHead.position.y = 2.7;
+        const wdEyeR = new THREE.Mesh(new THREE.SphereGeometry(0.04, 4, 4), new THREE.MeshBasicMaterial({color: 0xff0000})); wdEyeR.position.set(0.08, 2.7, 0.12); // Mata kanan nyala
+        const scar = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.16, 0.05), new THREE.MeshBasicMaterial({color: 0x880000})); scar.position.set(-0.08, 2.7, 0.12); // Mata kiri robek cakar
+        wendigoDamaged.add(wdBody, wdHead, wdEyeR, scar); scene.add(wendigoDamaged); wendigoDamaged.visible = false;
+
+        // TREE GENERATOR
         const trunkGeo = new THREE.CylinderGeometry(0.18, 0.28, 8, 5);
         const leavesGeo = new THREE.ConeGeometry(1.8, 5.5, 4);
         const trunkMat = new THREE.MeshStandardMaterial({ color: 0x110b06, roughness: 0.9 });
@@ -231,59 +260,55 @@
             tree.scale.set(scale, scale, scale);
             tree.position.set(x, 0, z);
             scene.add(tree);
+            treePositions.push({x: x, z: z}); // Masuk ke sistem pendeteksi & minimap
         }
 
-        // Chase Corridor
+        // Jalur Awal Koridor Lari (Chase 1)
         for(let z = 10; z > -140; z -= 7) {
             spawnAdvancedTree(-4.8 - Math.random()*1.5, z);
             spawnAdvancedTree(4.8 + Math.random()*1.5, z);
         }
 
-        // Bounded 10x10 Exploration Grid Setup (Center at z = -155)
+        // EXPANDED MAP 30x30 SYSTEM (Pusat di Z = -155)
         let exploreCenterZ = -155;
-        let arenaSize = 13; 
+        let arenaSize = 15; // Setengah diameter 30 (Dari -15 sampai +15)
 
         function buildDenseArenaBoundaries() {
-            for(let x = -arenaSize - 4; x <= arenaSize + 4; x += 2.2) {
+            // Tembok pohon pembatas kotak 30x30
+            for(let x = -arenaSize - 4; x <= arenaSize + 4; x += 2.0) {
                 spawnAdvancedTree(x, exploreCenterZ - arenaSize - 2); 
                 spawnAdvancedTree(x, exploreCenterZ + arenaSize + 2); 
             }
-            for(let z = exploreCenterZ - arenaSize - 2; z <= exploreCenterZ + arenaSize + 2; z += 2.2) {
+            for(let z = exploreCenterZ - arenaSize - 2; z <= exploreCenterZ + arenaSize + 2; z += 2.0) {
                 spawnAdvancedTree(-arenaSize - 2, z); 
                 spawnAdvancedTree(arenaSize + 2, z);  
             }
-            spawnAdvancedTree(-4, exploreCenterZ - 4);
-            spawnAdvancedTree(5, exploreCenterZ + 5);
+            // Tambahkan 40 pohon acak di dalam internal map 30x30 buat tempat bersembunyi
+            for(let i=0; i<40; i++) {
+                let rx = (Math.random() - 0.5) * 26;
+                let rz = exploreCenterZ + (Math.random() - 0.5) * 26;
+                if(Math.abs(rx) > 2 && Math.abs(rz - exploreCenterZ) > 2) {
+                    spawnAdvancedTree(rx, rz);
+                }
+            }
         }
         buildDenseArenaBoundaries();
 
-        // 5. OBJECTIVE BUILDER: GENERATE OWL EGGS (3 Items Scattered)
+        // GENERATE OWL EGGS (3 Items)
         const eggGeo = new THREE.SphereGeometry(0.25, 12, 12);
-        const eggMat = new THREE.MeshStandardMaterial({ 
-            color: 0xaa00ff, 
-            emissive: 0x5500aa, 
-            emissiveIntensity: 3.0, 
-            roughness: 0.2 
-        });
+        const eggMat = new THREE.MeshStandardMaterial({ color: 0xaa00ff, emissive: 0x5500aa, emissiveIntensity: 3.0, roughness: 0.2 });
 
         function spawnObjectiveEgg(x, z) {
             const egg = new THREE.Mesh(eggGeo, eggMat);
-            egg.scale.set(1, 1.38, 1); 
-            egg.position.set(x, 0.35, z);
-            
-            const light = new THREE.PointLight(0xd400ff, 1.2, 4);
-            light.position.set(0, 0, 0);
-            egg.add(light);
-
-            scene.add(egg);
-            eggList.push(egg); 
+            egg.scale.set(1, 1.38, 1); egg.position.set(x, 0.35, z);
+            const light = new THREE.PointLight(0xd400ff, 1.2, 4); egg.add(light);
+            scene.add(egg); eggList.push(egg);
         }
-
         spawnObjectiveEgg(-7, exploreCenterZ - 6); 
-        spawnObjectiveEgg(7, exploreCenterZ + 5);  
-        spawnObjectiveEgg(0, exploreCenterZ - 8);  
+        spawnObjectiveEgg(8, exploreCenterZ + 5);  
+        spawnObjectiveEgg(-2, exploreCenterZ + 8);  
 
-        // --- GAMEPLAY FLOW HANDLERS ---
+        // --- GAME SYSTEM ENGINE ---
         function initForestVolume() {
             document.getElementById('main-menu').style.display = 'none';
             container.style.display = 'block';
@@ -304,10 +329,20 @@
             if(duration) setTimeout(() => { if(subtitles.innerText === msg) subtitles.style.opacity = 0; }, duration);
         }
 
-        // --- CONTROLS ENGINE ---
+        function handleGameOver(reason) {
+            isGameOver = true;
+            if(!isMobile) document.exitPointerLock();
+            document.getElementById('mobile-ui').style.display = 'none';
+            document.getElementById('minimap-container').style.display = 'none';
+            document.getElementById('arrow-hud').style.display = 'none';
+            document.getElementById('game-over-reason').innerText = reason;
+            document.getElementById('game-over').style.display = 'block';
+        }
+
+        // --- CONTROLS SYSTEM ---
         if(!isMobile) {
             document.addEventListener('mousemove', (e) => {
-                if(!gameStarted || isGameOver || currentPhase === PHASE_INTRO) return;
+                if(!gameStarted || isGameOver || currentPhase === PHASE_INTRO || currentPhase === PHASE_MASAVER || currentPhase === PHASE_WENDIGO) return;
                 camera.rotation.y -= e.movementX * mouseSensitivity;
                 camera.rotation.x -= e.movementY * mouseSensitivity;
                 camera.rotation.x = Math.max(-Math.PI/2.4, Math.min(Math.PI/2.4, camera.rotation.x));
@@ -349,10 +384,9 @@
             
             let lookTouchId = null, lastLX = 0, lastLY = 0;
             window.addEventListener('touchstart', (e) => {
-                if(currentPhase === PHASE_INTRO) return;
+                if(currentPhase === PHASE_INTRO || currentPhase === PHASE_MASAVER || currentPhase === PHASE_WENDIGO) return;
                 for(let i=0; i<e.changedTouches.length; i++) {
-                    let t = e.changedTouches[i];
-                    if(t.clientX > window.innerWidth / 2) { lookTouchId = t.identifier; lastLX = t.clientX; lastLY = t.clientY; }
+                    let t = e.changedTouches[i]; if(t.clientX > window.innerWidth / 2) { lookTouchId = t.identifier; lastLX = t.clientX; lastLY = t.clientY; }
                 }
             }, {passive:true});
             window.addEventListener('touchmove', (e) => {
@@ -375,7 +409,7 @@
 
         let clock = new THREE.Clock();
 
-        // --- MAIN ENGINE LOOP ---
+        // --- ENGINE LOOP ---
         function animate() {
             requestAnimationFrame(animate);
             if (!gameStarted || isGameOver) { renderer.render(scene, camera); return; }
@@ -383,15 +417,16 @@
             const delta = Math.min(0.1, clock.getDelta()); 
             const time = clock.getElapsedTime();
 
-            // FLASHLIGHT ENGINE
-            flashlight.position.copy(camera.position);
             const actualCamDir = new THREE.Vector3(); camera.getWorldDirection(actualCamDir);
+
+            // FLASHLIGHT ENGINE (LAMBAT BANGET HABISNYA)
+            flashlight.position.copy(camera.position);
             flashlight.target.position.copy(camera.position).add(actualCamDir);
             
-            // MODIFIKASI: Baterai infiniti (tidak berkurang)
-            if (flashlightOn) {
-                if (currentPhase === PHASE_CHASE && owlDistanceToPlayer < 15 && Math.random() > 0.82) {
-                    flashlight.intensity = 0.5;
+            if (flashlightOn && battery > 0) {
+                battery -= 0.0025; // Diperlambat drastis sesuai request!
+                if ((currentPhase === PHASE_CHASE || currentPhase === PHASE_CHASE_2) && owlDistanceToPlayer < 12 && Math.random() > 0.85) {
+                    flashlight.intensity = 0.4; // Flicker ketakutan
                 } else { flashlight.intensity = 8.0; }
             } else { flashlight.intensity = 0; }
             document.getElementById('battery-bar').style.width = battery + "%";
@@ -399,46 +434,65 @@
             // STAMINA SYSTEM
             let isMoving = (move.forward || move.backward || move.left || move.right);
             if (move.sprint && isMoving && !isExhausted) {
-                stamina -= 0.18; if (stamina <= 0) { stamina = 0; isExhausted = true; }
+                stamina -= 0.20; if (stamina <= 0) { stamina = 0; isExhausted = true; }
             } else {
-                stamina += 0.22; if (stamina > 100) stamina = 100; if (stamina > 22) isExhausted = false;
+                stamina += 0.25; if (stamina > 100) stamina = 100; if (stamina > 22) isExhausted = false;
             }
             document.getElementById('stamina-bar').style.width = stamina + "%";
 
-            // --- PHASE CONTROLLER ---
+            // --- RADAR MINIMAP RENDERER ---
+            if (currentPhase >= PHASE_EXPLORE) {
+                document.getElementById('minimap-container').style.display = 'block';
+                let ctx = minimapCanvas.getContext('2d'); ctx.clearRect(0,0,120,120);
+                ctx.fillStyle = "rgba(0, 15, 6, 0.8)"; ctx.fillRect(0,0,120,120);
+                
+                let radarScale = 2.5; let cx = 60, cy = 60; // Player center
+                
+                // Draw Trees (Green dots)
+                ctx.fillStyle = "#11aa33";
+                treePositions.forEach(t => {
+                    let dx = t.x - camera.position.x; let dz = t.z - camera.position.z;
+                    let mx = cx + dx * radarScale; let my = cy + dz * radarScale;
+                    if(mx>=0 && mx<=120 && my>=0 && my<=120) { ctx.beginPath(); ctx.arc(mx, my, 1.5, 0, Math.PI*2); ctx.fill(); }
+                });
+                // Draw Eggs (Purple dots)
+                ctx.fillStyle = "#d400ff";
+                eggList.forEach(e => {
+                    let dx = e.position.x - camera.position.x; let dz = e.position.z - camera.position.z;
+                    let mx = cx + dx * radarScale; let my = cy + dz * radarScale;
+                    if(mx>=0 && mx<=120 && my>=0 && my<=120) { ctx.beginPath(); ctx.arc(mx, my, 3, 0, Math.PI*2); ctx.fill(); }
+                });
+                // Draw Police target in phase 7 (Blue dot)
+                if (currentPhase === PHASE_RETURN) {
+                    ctx.fillStyle = "#00aaff";
+                    let dx = 1.4 - camera.position.x; let dz = -1.8 - camera.position.z;
+                    let mx = cx + dx * radarScale; let my = cy + dz * radarScale;
+                    if(mx>=0 && mx<=120 && my>=0 && my<=120) { ctx.beginPath(); ctx.arc(mx, my, 4, 0, Math.PI*2); ctx.fill(); }
+                }
+                // Draw Center Player (White dot + line view)
+                ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = "rgba(0, 255, 100, 0.5)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + actualCamDir.x * 14, cy + actualCamDir.z * 14); ctx.stroke();
+            }
+
+            // --- GAMEPLAY STORY LOGIC PHASES ---
             
-            // PHASE 0: SCRIPTED INTRO
+            // PHASE 0: INTRO SCRIPT
             if (currentPhase === PHASE_INTRO) {
                 introTimer++;
-                if (introStage === 0) {
-                    displaySubtitle("HUHUHU JANCU gua capek banget anjing... Goa b******, monster sialan...", 3800);
-                    introStage = 1;
-                }
-                
-                if (introTimer === 160) {
-                    playScreenFlash();
-                    scene.remove(wendigo); 
-                    savior.visible = true; 
-                    introStage = 2;
-                }
-                
+                if (introStage === 0) { displaySubtitle("HUHUHU JANCU gua capek banget... Goa b******, monster sialan...", 3800); introStage = 1; }
+                if (introTimer === 160) { playScreenFlash(); scene.remove(wendigo); savior.visible = true; introStage = 2; }
                 if (introStage === 2 && introTimer > 170) {
-                    displaySubtitle("Orang Asing: 'Lu gak apa-apa kan?! Berdiri, area ini tidak am--'", 3200);
-                    camera.rotation.z = Math.max(0, camera.rotation.z - 0.006);
-                    camera.position.y = Math.min(1.75, camera.position.y + 0.018);
+                    displaySubtitle("Polisi: 'Lu gak apa-apa kan?! Berdiri, area ini tidak am--'", 3200);
+                    camera.rotation.z = Math.max(0, camera.rotation.z - 0.006); camera.position.y = Math.min(1.75, camera.position.y + 0.018);
                     if(camera.position.y >= 1.75 && camera.rotation.z <= 0) introStage = 3;
                 }
-
                 if (introTimer === 350) {
-                    theOwl.visible = true;
-                    theOwl.position.set(savior.position.x, 1.75, savior.position.z);
-                    displaySubtitle("Orang Asing: 'KREEEAACHH!! AGHHH SIALAN BURUNG HANTU RAKS--!!!'", 3000);
-                    introStage = 4;
+                    theOwl.visible = true; theOwl.position.set(savior.position.x, 1.75, savior.position.z);
+                    displaySubtitle("Polisi: 'KREEEAACHH!! AGHHH SIALAN BURUNG HANTU RAKS--!!!'", 3000); introStage = 4;
                 }
-
                 if (introStage === 4) {
-                    savior.position.y += 0.4;
-                    theOwl.position.y += 0.4;
+                    savior.position.y += 0.4; theOwl.position.y += 0.4;
                     if (savior.position.y > 22) {
                         displaySubtitle("SYSTEM: BURUNG HANTU ITU KEMBALI TURUN MEMBURUMU! LARI SEKARANG!!!", 4500);
                         document.getElementById('status-mode').innerText = "STATUS: DIKEJAR [THE OWL]";
@@ -449,58 +503,28 @@
                 }
             }
             
-            // PHASE 1: CHASE (100 METERS)
+            // PHASE 1: FIRST CHASE (100M)
             else if (currentPhase === PHASE_CHASE) {
                 let pSpeed = (move.sprint && !isExhausted) ? 5.8 : 3.2;
-                
-                if (move.forward) {
-                    camera.position.z -= pSpeed * delta;
-                    chaseDistanceLeft -= pSpeed * delta;
-                    if(chaseDistanceLeft < 0) chaseDistanceLeft = 0;
-                    owlDistanceToPlayer += (move.sprint && !isExhausted) ? 0.02 : -0.01;
-                } else {
-                    owlDistanceToPlayer -= 0.08;
-                }
+                if (move.forward) { camera.position.z -= pSpeed * delta; chaseDistanceLeft -= pSpeed * delta; owlDistanceToPlayer += (move.sprint && !isExhausted) ? 0.02 : -0.01; }
+                else { owlDistanceToPlayer -= 0.08; }
 
                 theOwl.position.z = camera.position.z + owlDistanceToPlayer;
-                theOwl.position.x = camera.position.x + Math.sin(time * 4.0) * 1.5; 
-                theOwl.position.y = 3.8 + Math.cos(time * 3.0) * 0.8; 
-                theOwl.lookAt(camera.position);
-
-                wingL.rotation.z = Math.sin(time * 12.0) * 0.6;
-                wingR.rotation.z = -Math.sin(time * 12.0) * 0.6;
+                theOwl.position.x = camera.position.x + Math.sin(time * 4.0) * 1.5; theOwl.position.y = 3.8 + Math.cos(time * 3.0) * 0.8;
+                theOwl.lookAt(camera.position); wingL.rotation.z = Math.sin(time * 12.0) * 0.6; wingR.rotation.z = -Math.sin(time * 12.0) * 0.6;
 
                 document.getElementById('task-line').innerText = `KABUR: ${Math.ceil(chaseDistanceLeft)} METER LAGI`;
+                if (owlDistanceToPlayer <= 1.2) { handleGameOver("MATI TERCABIK PARUH OWL"); return; }
 
-                // FAIL JUMPSCARE CHECK
-                if (owlDistanceToPlayer <= 1.2) {
-                    isGameOver = true;
-                    if(!isMobile) document.exitPointerLock();
-                    document.getElementById('mobile-ui').style.display = 'none';
-                    document.getElementById('game-over').style.display = 'block';
-                    camera.position.set(theOwl.position.x, 1.5, theOwl.position.z - 0.5);
-                    camera.lookAt(theOwl.position);
-                    let shake = () => {
-                        if(!isGameOver) return;
-                        renderer.domElement.style.transform = `translate(${(Math.random()-0.5)*50}px, ${(Math.random()-0.5)*50}px) scale(1.2)`;
-                        requestAnimationFrame(shake);
-                    };
-                    shake();
-                    return;
-                }
-
-                // SUCCESS CHASE PHASE
                 if (chaseDistanceLeft <= 0) {
-                    currentPhase = PHASE_EXPLORE;
-                    theOwl.visible = false; 
-                    displaySubtitle("Hah... Hah... Gua lolos. Tapi hutan ini dikurung barisan pohon padat. Ada apa di sini?", 5000);
-                    document.getElementById('status-mode').innerText = "STATUS: PETAK 10x10";
-                    document.getElementById('status-mode').style.color = "var(--primary-green)";
+                    currentPhase = PHASE_EXPLORE; theOwl.visible = false; 
+                    displaySubtitle("Hah... Hah... Gua lolos. Tapi hutan ini dikurung barisan pohon. Ada apa di sini?", 5000);
+                    document.getElementById('status-mode').innerText = "STATUS: MAP 30x30"; document.getElementById('status-mode').style.color = "var(--primary-green)";
                     document.getElementById('task-line').innerText = `MISI: AMBIL TELUR GAIB (${totalEggsCollected}/${targetEggsNeeded})`;
                 }
             }
             
-            // PHASE 2: EXPLORATION + OBJECTIVE COLLECTION SYSTEM
+            // PHASE 2: EXPLORATION & EGG COLLECTING (IN 30x30 ARENA)
             else if (currentPhase === PHASE_EXPLORE) {
                 let pSpeed = (move.sprint && !isExhausted) ? 4.2 : 2.4;
                 const forwardVec = new THREE.Vector3(actualCamDir.x, 0, actualCamDir.z).normalize();
@@ -511,53 +535,168 @@
                 if (move.left) camera.position.addScaledVector(sideVec, -pSpeed * delta);
                 if (move.right) camera.position.addScaledVector(sideVec, pSpeed * delta);
 
-                // Headbobbing
-                if (isMoving) {
-                    camera.position.y = 1.75 + Math.sin(time * 7.5) * 0.035;
-                } else { camera.position.y = 1.75 + Math.sin(time * 1.2) * 0.005; }
+                camera.position.y = 1.75 + (isMoving ? Math.sin(time * 7.5) * 0.035 : Math.sin(time * 1.2) * 0.005);
 
-                // COLLISION CHECK DENGAN TELUR GAIB OWL
+                // Check Egg Collision
                 for (let i = eggList.length - 1; i >= 0; i--) {
-                    let egg = eggList[i];
-                    let distToEgg = camera.position.distanceTo(egg.position);
-                    
-                    egg.position.y = 0.35 + Math.sin(time * 3.0 + i) * 0.08;
-                    egg.rotation.y += 0.02;
+                    let egg = eggList[i]; let distToEgg = camera.position.distanceTo(egg.position);
+                    egg.position.y = 0.35 + Math.sin(time * 3.0 + i) * 0.08; egg.rotation.y += 0.02;
 
                     if (distToEgg < 1.4) {
-                        playScreenFlash(); 
-                        scene.remove(egg);  
-                        eggList.splice(i, 1); 
-                        
-                        totalEggsCollected++;
+                        playScreenFlash(); scene.remove(egg); eggList.splice(i, 1); totalEggsCollected++;
                         document.getElementById('task-line').innerText = `MISI: AMBIL TELUR GAIB (${totalEggsCollected}/${targetEggsNeeded})`;
                         displaySubtitle(`Lu menemukan Telur Gaib Owl! (${totalEggsCollected}/${targetEggsNeeded})`, 3000);
 
+                        // TRIGGER NEW PLOT: CHASED AGAIN BY THE OWL RE-ATTACK!
                         if (totalEggsCollected >= targetEggsNeeded) {
-                            isGameOver = true; 
-                            if(!isMobile) document.exitPointerLock();
-                            document.getElementById('mobile-ui').style.display = 'none';
-                            document.getElementById('game-clear').style.display = 'block'; 
-                            document.getElementById('status-mode').innerText = "STATUS: CLEAR";
-                            return;
+                            currentPhase = PHASE_CHASE_2; theOwl.visible = true; owlDistanceToPlayer = 25;
+                            playScreenFlash();
+                            displaySubtitle("THE OWL NGAMUK KARENA TELURNYA DIAMBIL! LARI LURUS TERUS JANGAN NOLEH!!", 5000);
+                            document.getElementById('status-mode').innerText = "STATUS: DIKEJAR LAGI!";
+                            document.getElementById('status-mode').style.color = "var(--primary-red)";
                         }
                     }
                 }
 
-                // BOUNDARY CHECK PETAK ARENA
-                let hitWall = false;
-                if (camera.position.x <= -arenaSize || camera.position.x >= arenaSize || 
-                    camera.position.z <= (exploreCenterZ - arenaSize) || camera.position.z >= (exploreCenterZ + arenaSize)) {
-                    hitWall = true;
-                }
-
-                if (hitWall) {
-                    glitchOverlay.style.background = "rgba(255, 0, 0, 0.25)";
-                    displaySubtitle("Hutannya terlalu padat... Gua bakal tersesat kalau jalan nembus ke luar area petak.", 1000);
+                // Map 30x30 Boundary Lock
+                if (camera.position.x <= -arenaSize || camera.position.x >= arenaSize || camera.position.z <= (exploreCenterZ - arenaSize) || camera.position.z >= (exploreCenterZ + arenaSize)) {
+                    glitchOverlay.style.background = "rgba(255, 0, 0, 0.2)";
                     camera.position.x = Math.max(-arenaSize, Math.min(arenaSize, camera.position.x));
                     camera.position.z = Math.max(exploreCenterZ - arenaSize, Math.min(exploreCenterZ + arenaSize, camera.position.z));
+                } else { glitchOverlay.style.background = "rgba(0,0,0,0)"; }
+            }
+
+            // PHASE 3: CHASE 2 - RUN STRAIGHT TO ESCAPE THE OWL
+            else if (currentPhase === PHASE_CHASE_2) {
+                let pSpeed = (move.sprint && !isExhausted) ? 5.8 : 3.2;
+                // Hanya perbolehkan lari lurus maju menembus batas untuk selamat
+                if (move.forward) {
+                    camera.position.z -= pSpeed * delta;
+                    chase2DistanceLeft -= pSpeed * delta;
+                    owlDistanceToPlayer += (move.sprint && !isExhausted) ? 0.02 : -0.01;
+                } else { owlDistanceToPlayer -= 0.08; }
+
+                theOwl.position.z = camera.position.z + owlDistanceToPlayer;
+                theOwl.position.x = camera.position.x + Math.sin(time * 4.0) * 1.5; theOwl.position.y = 3.8 + Math.cos(time * 3.0) * 0.8;
+                theOwl.lookAt(camera.position); wingL.rotation.z = Math.sin(time * 12.0) * 0.6; wingR.rotation.z = -Math.sin(time * 12.0) * 0.6;
+
+                document.getElementById('task-line').innerText = `LARI LURUS: ${Math.ceil(chase2DistanceLeft)} METER`;
+                if (owlDistanceToPlayer <= 1.2) { handleGameOver("MATI TERCABIK PARUH OWL"); return; }
+
+                if (chase2DistanceLeft <= 0) {
+                    currentPhase = PHASE_MASAVER; theOwl.visible = false;
+                    // Memunculkan Masaver NPC tepat di depan player
+                    masaver.position.set(camera.position.x, 0, camera.position.z - 3.5); masaver.lookAt(camera.position);
+                    masaver.visible = true; actionTimer = 0;
+                    document.getElementById('status-mode').innerText = "STATUS: DIALONG CUTSCENE";
+                    document.getElementById('status-mode').style.color = "#00aaff";
+                }
+            }
+
+            // PHASE 4: MEET MASAVER DIALOGUE SYSTEM
+            else if (currentPhase === PHASE_MASAVER) {
+                actionTimer += delta * 60;
+                if (actionTimer < 180) { displaySubtitle("Masaver: 'Woi! Lu ngapain di tengah hutan angker terlarang gini malem-malem?!'", 3000); }
+                else if (actionTimer < 360) { displaySubtitle("Player: 'Ada burung hantu raksasa... polisi tadi mati dibawa terbang...'", 3000); }
+                else if (actionTimer < 540) { displaySubtitle("Masaver: 'Hah? Polisi? Maksud lu tim SAR yang hilang? Sial, tempat ini dikutuk!!'", 3000); }
+                else {
+                    // Pindah ke serangan wendigo tiba-tiba
+                    currentPhase = PHASE_WENDIGO; actionTimer = 0; playScreenFlash();
+                    wendigoDamaged.position.set(masaver.position.x + 3, 0, masaver.position.z - 5);
+                    wendigoDamaged.visible = true;
+                }
+            }
+
+            // PHASE 5: WENDIGO DAMAGED APPEARS (MATANYA BOLONG SEBELAH)
+            else if (currentPhase === PHASE_WENDIGO) {
+                actionTimer += delta * 60; wendigoDamaged.lookAt(camera.position);
+                // Efek gempa layar tanda Wendigo mengaung marah
+                renderer.domElement.style.transform = `translate(${(Math.random()-0.5)*10}px, ${(Math.random()-0.5)*10}px)`;
+
+                if (actionTimer < 180) { displaySubtitle("Masaver: 'ANJING!! ITU WENDIGO YANG DIKABARKAN MATI! MATANYA BOLONG SEBELAH!!'", 3000); }
+                else if (actionTimer < 360) { displaySubtitle("Masaver: 'CEPAT LARI DAN BERSEMBUNYI DI BALIK POHON TERDEKAT SEBELUM DIA LIHAT LU!!'", 3000); }
+                else {
+                    currentPhase = PHASE_HIDE; masaver.visible = false; // Masaver kabur memisahkan diri
+                    hideProgress = 0; renderer.domElement.style.transform = 'none';
+                }
+            }
+
+            // PHASE 6: STEALTH MODE - HIDE IN NEAREST TREE
+            else if (currentPhase === PHASE_HIDE) {
+                let pSpeed = (move.sprint && !isExhausted) ? 4.2 : 2.4;
+                const forwardVec = new THREE.Vector3(actualCamDir.x, 0, actualCamDir.z).normalize();
+                const sideVec = new THREE.Vector3().crossVectors(forwardVec, camera.up).normalize();
+                if (move.forward) camera.position.addScaledVector(forwardVec, pSpeed * delta);
+                if (move.backward) camera.position.addScaledVector(forwardVec, -pSpeed * delta);
+                if (move.left) camera.position.addScaledVector(sideVec, -pSpeed * delta);
+                if (move.right) camera.position.addScaledVector(sideVec, pSpeed * delta);
+
+                // Batasi pergerakan di dlm area sembunyi 30x30 agar intens
+                camera.position.x = Math.max(-arenaSize, Math.min(arenaSize, camera.position.x));
+
+                // Pergerakan Wendigo memutar mencari player
+                wendigoDamaged.position.x = masaver.position.x + Math.sin(time * 1.5) * 6;
+                wendigoDamaged.position.z = masaver.position.z - 3 + Math.cos(time * 1.1) * 4;
+                wendigoDamaged.lookAt(camera.position);
+
+                // Deteksi jarak ke pohon terdekat
+                let nearTree = false;
+                for(let i=0; i<treePositions.length; i++) {
+                    let tp = treePositions[i];
+                    let d = camera.position.distanceTo(new THREE.Vector3(tp.x, camera.position.y, tp.z));
+                    if(d < 1.8) { nearTree = true; break; } // Player menempel ke pohon
+                }
+
+                if (nearTree) {
+                    hideProgress += delta * 22; // Bar sembunyi bertambah
+                    document.getElementById('status-mode').innerText = "STATUS: BERSEMBUNYI"; document.getElementById('status-mode').style.color = "#00ffcc";
+                    displaySubtitle("Tetap rapat di pohon... Wendigo sedang mencari...", 1000);
                 } else {
-                    glitchOverlay.style.background = "rgba(0, 0, 0, 0)";
+                    hideProgress = Math.max(0, hideProgress - delta * 12);
+                    document.getElementById('status-mode').innerText = "STATUS: DICARI WENDIGO!"; document.getElementById('status-mode').style.color = "var(--primary-red)";
+                    displaySubtitle("PERINGATAN: Cari pohon terdekat dan merapat ke batangnya!", 1000);
+                }
+                document.getElementById('task-line').innerText = `MISI: SEMBUNYI DI POHON (${Math.floor(hideProgress)}%)`;
+
+                if (hideProgress >= 100) {
+                    currentPhase = PHASE_RETURN; wendigoDamaged.visible = false; playScreenFlash();
+                    displaySubtitle("Wendigo kehilangan jejak dan pergi. Sekarang gua harus balik ke lokasi polisi tadi untuk cari bantuan!", 6000);
+                    document.getElementById('status-mode').innerText = "STATUS: KEMBALI KE TKP"; document.getElementById('status-mode').style.color = "var(--primary-green)";
+                }
+            }
+
+            // PHASE 7: LONG JOURNEY RETURN (NAVIGATED BY PANAH & MINIMAP)
+            else if (currentPhase === PHASE_RETURN) {
+                let pSpeed = (move.sprint && !isExhausted) ? 4.2 : 2.4;
+                const forwardVec = new THREE.Vector3(actualCamDir.x, 0, actualCamDir.z).normalize();
+                const sideVec = new THREE.Vector3().crossVectors(forwardVec, camera.up).normalize();
+                if (move.forward) camera.position.addScaledVector(forwardVec, pSpeed * delta);
+                if (move.backward) camera.position.addScaledVector(forwardVec, -pSpeed * delta);
+                if (move.left) camera.position.addScaledVector(sideVec, -pSpeed * delta);
+                if (move.right) camera.position.addScaledVector(sideVec, pSpeed * delta);
+
+                let targetPolicePos = new THREE.Vector3(1.4, camera.position.y, -1.8);
+                let currentDistance = camera.position.distanceTo(targetPolicePos);
+
+                document.getElementById('task-line').innerText = `JARAK TKP: ${Math.ceil(currentDistance)} METER`;
+                document.getElementById('arrow-hud').style.display = 'block';
+
+                // FORMULA MATEMATIS ROTASI PANAH NAVIGASI SECARA REAL-TIME
+                let targetDir = new THREE.Vector3().subVectors(targetPolicePos, camera.position);
+                let camAngle = Math.atan2(actualCamDir.x, actualCamDir.z);
+                let targetAngle = Math.atan2(targetDir.x, targetDir.z);
+                let finalRotation = camAngle - targetAngle;
+                document.getElementById('arrow-img').style.transform = `rotate(${finalRotation * (180/Math.PI)}deg)`;
+
+                // SUCCESS ZONE (Sampai di titik awal polisi ditembak)
+                if (currentDistance < 4.0) {
+                    isGameOver = true;
+                    if(!isMobile) document.exitPointerLock();
+                    document.getElementById('mobile-ui').style.display = 'none';
+                    document.getElementById('arrow-hud').style.display = 'none';
+                    document.getElementById('minimap-container').style.display = 'none';
+                    document.getElementById('game-clear').style.display = 'block';
+                    document.getElementById('status-mode').innerText = "STATUS: CLEAR";
                 }
             }
 
